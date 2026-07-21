@@ -24,6 +24,7 @@ type RecipeDetailModalProps = {
   onAddToList: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
   onEdit: () => void;
+  onShare: (recipe: Recipe) => void;
 };
 
 export function RecipeDetailModal({
@@ -34,6 +35,7 @@ export function RecipeDetailModal({
   onAddToList,
   onToggleFavorite,
   onEdit,
+  onShare,
 }: RecipeDetailModalProps) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
@@ -69,9 +71,14 @@ export function RecipeDetailModal({
                 <Text style={styles.subtitle}>{recipe.subtitle}</Text>
                 <Text style={styles.meta}>{recipe.time}  •  {recipe.difficulty}</Text>
               </View>
-              <TouchableOpacity style={[styles.heartButton, favorite && styles.heartButtonActive]} onPress={() => onToggleFavorite(recipe.id)}>
-                <Ionicons name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.white : colors.text} />
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.iconButton} onPress={() => onShare(recipe)}>
+                  <Ionicons name="share-social-outline" size={18} color={colors.text} />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.heartButton, favorite && styles.heartButtonActive]} onPress={() => onToggleFavorite(recipe.id)}>
+                  <Ionicons name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.white : colors.text} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Text style={styles.description}>{recipe.description}</Text>
@@ -158,6 +165,11 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  headerActions: {
+    flexDirection: isRTL ? 'row-reverse' : 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   titleWrap: {
     flex: 1,
     paddingRight: isRTL ? 0 : 12,
@@ -190,6 +202,16 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  iconButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceMuted,
   },
   heartButtonActive: {
     backgroundColor: colors.accent,

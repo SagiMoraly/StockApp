@@ -33,6 +33,8 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'common.type': 'Type',
     'common.colors': 'Colors',
     'common.quantity': 'Quantity',
+    'common.share': 'Share',
+    'common.import': 'Import',
 
     'settings.appearanceTitle': 'Appearance',
     'settings.themeTitle': 'Theme',
@@ -175,6 +177,20 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'recipeDetail.ingredients': 'Ingredients',
     'recipeDetail.addToList': 'Add to List',
 
+    'shareImport.title': 'Import Shared Data',
+    'shareImport.helper': 'Paste a StockUp share message here to preview what will be added.',
+    'shareImport.placeholder': 'Paste shared text...',
+    'shareImport.submit': 'Preview Import',
+    'shareImport.invalid': 'This does not look like a valid StockUp share message.',
+
+    'importPreview.title': 'Confirm Import',
+    'importPreview.missingItemsTitle': 'New items to add to your Items catalog',
+    'importPreview.noMissingItems': 'All shared items already exist in your catalog.',
+    'importPreview.recipeMessage': 'Recipe "{{name}}" will be added with {{count}} ingredients.',
+    'importPreview.listMessage': '{{count}} grocery items will be merged into "{{name}}".',
+    'importPreview.confirmRecipe': 'Add Recipe',
+    'importPreview.confirmList': 'Add Grocery Items',
+
     'recipeEdit.permissionTitle': 'Permission needed',
     'recipeEdit.permissionMessage': 'Please allow photo library access to select a recipe image, or keep going without one.',
     'recipeEdit.untitled': 'Untitled Recipe',
@@ -217,6 +233,8 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'common.type': 'סוג',
     'common.colors': 'צבעים',
     'common.quantity': 'כמות',
+    'common.share': 'שיתוף',
+    'common.import': 'ייבוא',
 
     'settings.appearanceTitle': 'מראה',
     'settings.themeTitle': 'ערכת נושא',
@@ -358,6 +376,20 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'recipeDetail.addPhoto': 'הוספת תמונת מתכון',
     'recipeDetail.ingredients': 'מרכיבים',
     'recipeDetail.addToList': 'הוספה לרשימה',
+
+    'shareImport.title': 'ייבוא שיתוף',
+    'shareImport.helper': 'הדביקו כאן הודעת שיתוף של StockUp כדי לראות תצוגה מקדימה לפני הוספה.',
+    'shareImport.placeholder': 'הדבקת טקסט שיתוף...',
+    'shareImport.submit': 'תצוגה מקדימה לייבוא',
+    'shareImport.invalid': 'הטקסט שהודבק אינו הודעת שיתוף תקינה של StockUp.',
+
+    'importPreview.title': 'אישור ייבוא',
+    'importPreview.missingItemsTitle': 'פריטים חדשים שיתווספו לקטלוג הפריטים שלך',
+    'importPreview.noMissingItems': 'כל הפריטים המשותפים כבר קיימים בקטלוג שלך.',
+    'importPreview.recipeMessage': 'המתכון "{{name}}" יתווסף עם {{count}} מרכיבים.',
+    'importPreview.listMessage': '{{count}} פריטי קניות ימוזגו אל "{{name}}".',
+    'importPreview.confirmRecipe': 'הוספת מתכון',
+    'importPreview.confirmList': 'הוספת פריטי קניות',
 
     'recipeEdit.permissionTitle': 'נדרשת הרשאה',
     'recipeEdit.permissionMessage': 'אפשרו גישה לגלריה כדי לבחור תמונת מתכון, או המשיכו בלי תמונה.',

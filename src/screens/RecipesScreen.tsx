@@ -20,6 +20,7 @@ type RecipesScreenProps = {
   onRecipePress: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
   onAddRecipePress: () => void;
+  onImportRecipePress: () => void;
 };
 
 export function RecipesScreen({
@@ -33,6 +34,7 @@ export function RecipesScreen({
   onRecipePress,
   onToggleFavorite,
   onAddRecipePress,
+  onImportRecipePress,
 }: RecipesScreenProps) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
@@ -53,10 +55,24 @@ export function RecipesScreen({
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.titleRow}>
         <Text style={styles.title}>{t('recipes.title')}</Text>
-        <TouchableOpacity style={styles.addButton} onPress={onAddRecipePress}>
-          <Ionicons name="add" size={18} color="#FFFFFF" />
-          <Text style={styles.addButtonText}>{t('recipes.addButton')}</Text>
-        </TouchableOpacity>
+        <View style={styles.titleActions}>
+          <TouchableOpacity
+            style={styles.iconActionButton}
+            onPress={onImportRecipePress}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.import')}
+          >
+            <Ionicons name="download-outline" size={18} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.iconActionButton, styles.primaryIconActionButton]}
+            onPress={onAddRecipePress}
+            accessibilityRole="button"
+            accessibilityLabel={t('recipes.addButton')}
+          >
+            <Ionicons name="add" size={18} color={colors.white} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <SearchField
@@ -134,6 +150,26 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: 16,
+    gap: 8,
+  },
+  titleActions: {
+    flexDirection: isRTL ? 'row-reverse' : 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  iconActionButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: colors.surfaceMuted,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryIconActionButton: {
+    backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   title: {
     color: colors.title,
@@ -141,20 +177,6 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     lineHeight: 42,
     fontWeight: '800',
     textAlign: isRTL ? 'right' : 'left',
-  },
-  addButton: {
-    flexDirection: isRTL ? 'row-reverse' : 'row',
-    alignItems: 'center',
-    gap: 4,
-    borderRadius: radius.pill,
-    backgroundColor: colors.accent,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  addButtonText: {
-    color: colors.white,
-    fontWeight: '700',
-    fontSize: 14,
   },
   categoriesRow: {
     marginTop: 16,

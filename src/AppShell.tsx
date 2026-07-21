@@ -1,12 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { Linking, SafeAreaView, Share, StyleSheet, View } from 'react-native';
 
 import { AddToListModal } from './components/AddToListModal';
 import { BottomNav } from './components/BottomNav';
+import { ImportPreviewModal } from './components/ImportPreviewModal';
 import { RecipeDetailModal } from './components/RecipeDetailModal';
 import { RecipeEditModal } from './components/RecipeEditModal';
+import { ShareImportModal } from './components/ShareImportModal';
 import { SuccessModal } from './components/SuccessModal';
 import { ThemeSettingsModal } from './components/ThemeSettingsModal';
 import {
@@ -20,16 +22,28 @@ import { GroceryListScreen } from './screens/GroceryListScreen';
 import { HomeScreen } from './screens/HomeScreen';
 import { PantryScreen } from './screens/PantryScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
+import { useI18n } from './LocalizationProvider';
 import { useTheme } from './ThemeProvider';
 import { GrocerySectionId, QuickAddSelection, QuickSelectItem, Recipe, RecipeFilter, TabKey } from './types';
 import {
   adjustGroceryItemQuantity,
+  addCustomItemToList,
   addIngredientsToList,
   addQuickItemsToList,
   clearGroceryList,
   setGroceryItemQuantity,
   toggleGroceryItem,
 } from './utils/grocery';
+import {
+  createGroceryListSharePayload,
+  createShareDeepLink,
+  createRecipeSharePayload,
+  encodeSharePayload,
+  getMissingCatalogItems,
+  parseSharePayload,
+  SharedCatalogItem,
+  StockUpSharePayload,
+} from './utils/sharePayload';
 
 const ITEM_STORAGE_KEY = 'stockup.catalog.items';
 const TYPE_STORAGE_KEY = 'stockup.catalog.types';
@@ -154,8 +168,14 @@ const createDefaultState = () => ({
   groceryList: createInitialGroceryList(),
 });
 
+type PendingImport = {
+  payload: StockUpSharePayload;
+  missingCatalogItems: SharedCatalogItem[];
+};
+
 export function AppShell() {
   const { colors, themeName } = useTheme();
+  const { t } = useI18n();
   const defaultState = createDefaultState();
   const [itemTypes, setItemTypes] = useState<string[]>(defaultState.itemTypes);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
@@ -172,6 +192,10 @@ export function AppShell() {
   const [showRecipeCreate, setShowRecipeCreate] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showThemeSettings, setShowThemeSettings] = useState(false);
+  const [showImportDialog, setShowImportDialog] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [pendingImport, setPendingImport] = useState<PendingImport | null>(null);
+  const [queuedDeepLinkInput, setQueuedDeepLinkInput] = useState<string | null>(null);
   const [lastAddedCount, setLastAddedCount] = useState(0);
   const [storageLoaded, setStorageLoaded] = useState(false);
 
@@ -288,6 +312,61 @@ export function AppShell() {
     ]);
   }, [storageLoaded, itemTypes, quickSelectItems, recipeList, favoriteRecipeIds, groceryList]);
 
+  const queueImportFromInput = (rawInput: string) => {
+    const parsedPayload = parseSharePayload(rawInput);
+
+    if (!parsedPayload) {
+      return false;
+    }
+
+    setImportError(null);
+    setShowImportDialog(false);
+    setPendingImport({
+      payload: parsedPayload,
+      missingCatalogItems: getMissingCatalogItems(parsedPayload, quickSelectItems),
+    });
+
+    return true;
+  };
+
+  useEffect(() => {
+    const handleIncomingUrl = (url: string) => {
+      if (!url) {
+        return;
+      }
+
+      if (!storageLoaded) {
+        setQueuedDeepLinkInput(url);
+        return;
+      }
+
+      queueImportFromInput(url);
+    };
+
+    void Linking.getInitialURL().then((initialUrl) => {
+      if (initialUrl) {
+        handleIncomingUrl(initialUrl);
+      }
+    });
+
+    const subscription = Linking.addEventListener('url', ({ url }) => {
+      handleIncomingUrl(url);
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [storageLoaded, quickSelectItems]);
+
+  useEffect(() => {
+    if (!storageLoaded || !queuedDeepLinkInput) {
+      return;
+    }
+
+    queueImportFromInput(queuedDeepLinkInput);
+    setQueuedDeepLinkInput(null);
+  }, [storageLoaded, queuedDeepLinkInput, quickSelectItems]);
+
   const query = searchQuery.trim().toLowerCase();
   const selectedRecipe = recipeList.find((recipe) => recipe.id === selectedRecipeId) ?? null;
 
@@ -396,6 +475,166 @@ export function AppShell() {
 
   const addQuickListItems = (selections: QuickAddSelection[]) => {
     setGroceryList((currentList) => addQuickItemsToList(currentList, quickSelectItems, selections));
+  };
+
+  const buildUniqueQuickItemId = (name: string, takenIds: Set<string>) => {
+    const baseSlug = slugifyLabel(name) || 'item';
+    let candidate = `quick-${baseSlug}`;
+    let suffix = 2;
+
+    while (takenIds.has(candidate)) {
+      candidate = `quick-${baseSlug}-${suffix}`;
+      suffix += 1;
+    }
+
+    takenIds.add(candidate);
+    return candidate;
+  };
+
+  const importMissingCatalogItems = (missingItems: SharedCatalogItem[]) => {
+    if (!missingItems.length) {
+      return new Map<string, QuickSelectItem>();
+    }
+
+    const createdItems = new Map<string, QuickSelectItem>();
+    const currentIds = new Set(quickSelectItems.map((item) => item.id));
+    const nextItems = missingItems.map((item) => {
+      const nextItem: QuickSelectItem = {
+        id: buildUniqueQuickItemId(item.name, currentIds),
+        name: item.name,
+        sectionId: item.sectionId,
+        unitLabel: item.unitLabel,
+        colors: item.colors,
+      };
+
+      createdItems.set(item.name.toLowerCase(), nextItem);
+      return nextItem;
+    });
+
+    setItemTypes((currentTypes) =>
+      Array.from(new Set([...currentTypes, ...nextItems.map((item) => item.sectionId)])),
+    );
+    setQuickSelectItems((currentItems) => [...currentItems, ...nextItems]);
+
+    return createdItems;
+  };
+
+  const importSharedPayload = () => {
+    if (!pendingImport) {
+      return;
+    }
+
+    const payload = pendingImport.payload;
+    const createdQuickItemsByName = importMissingCatalogItems(pendingImport.missingCatalogItems);
+    const knownQuickItemsByName = new Map(
+      quickSelectItems.map((item) => [item.name.toLowerCase(), item]),
+    );
+
+    createdQuickItemsByName.forEach((value, key) => {
+      knownQuickItemsByName.set(key, value);
+    });
+
+    if (payload.kind === 'recipe' && payload.recipe) {
+      const importedRecipeCategory = categories.includes(payload.recipe.category)
+        ? payload.recipe.category
+        : 'Dinner';
+      const importedRecipe: Recipe = {
+        id: buildRecipeId(payload.recipe.title),
+        title: payload.recipe.title,
+        subtitle: payload.recipe.subtitle,
+        description: payload.recipe.description,
+        time: payload.recipe.time,
+        difficulty: payload.recipe.difficulty,
+        servings: payload.recipe.servings,
+        image: payload.recipe.image,
+        category: importedRecipeCategory,
+        ingredients: payload.recipe.ingredients.map((ingredient, index) => {
+          const knownItem = knownQuickItemsByName.get(ingredient.name.toLowerCase());
+          const catalogFallback = payload.catalogItems.find(
+            (catalogItem) => catalogItem.name.toLowerCase() === ingredient.name.toLowerCase(),
+          );
+
+          return {
+            id: `ingredient-${buildRecipeId(ingredient.name)}-${index + 1}`,
+            name: ingredient.name,
+            amount: ingredient.amount,
+            sectionId: ingredient.sectionId ?? knownItem?.sectionId ?? catalogFallback?.sectionId,
+            quickItemId: knownItem?.id,
+            unitLabel: ingredient.unitLabel ?? knownItem?.unitLabel ?? catalogFallback?.unitLabel,
+          };
+        }),
+      };
+
+      setRecipeList((currentRecipes) => [importedRecipe, ...currentRecipes]);
+      setActiveTab('recipes');
+      setSelectedRecipeId(importedRecipe.id);
+      setShowRecipeCreate(false);
+      setShowRecipeEdit(false);
+    }
+
+    if (payload.kind === 'grocery-list' && payload.groceryList) {
+      const importedItems = payload.groceryList.items;
+
+      setGroceryList((currentList) =>
+        importedItems.reduce(
+          (nextList, item) =>
+            addCustomItemToList(nextList, {
+              name: item.name,
+              quantity: item.quantity,
+              sectionId: item.sectionId,
+              unitLabel: item.unitLabel,
+              quickItemId: knownQuickItemsByName.get(item.name.toLowerCase())?.id,
+            }),
+          currentList,
+        ),
+      );
+
+      setLastAddedCount(importedItems.length);
+      setShowSuccess(true);
+      setActiveTab('list');
+    }
+
+    setPendingImport(null);
+  };
+
+  const shareRecipe = async (recipe: Recipe) => {
+    const payload = createRecipeSharePayload(recipe, quickSelectItems);
+    const shareLink = createShareDeepLink(payload);
+
+    try {
+      await Share.share({
+        message: `Open in StockUp: ${shareLink}`,
+        url: shareLink,
+      });
+    } catch {
+    }
+  };
+
+  const shareGroceryList = async () => {
+    const payload = createGroceryListSharePayload(groceryList, quickSelectItems);
+    const shareLink = createShareDeepLink(payload);
+
+    try {
+      await Share.share({
+        message: `Open in StockUp: ${shareLink}`,
+        url: shareLink,
+      });
+    } catch {
+    }
+  };
+
+  const openImportDialog = () => {
+    setImportError(null);
+    setShowImportDialog(true);
+  };
+
+  const submitImportDialog = (rawInput: string) => {
+    if (!queueImportFromInput(rawInput)) {
+      setImportError(t('shareImport.invalid'));
+      return false;
+    }
+
+    return true;
   };
 
   const addAvailableItem = (item: Omit<QuickSelectItem, 'id'>) => {
@@ -603,6 +842,7 @@ export function AppShell() {
             onRecipePress={openRecipe}
             onToggleFavorite={toggleFavorite}
             onAddRecipePress={openCreateRecipe}
+            onImportRecipePress={openImportDialog}
           />
         );
       case 'list':
@@ -619,6 +859,8 @@ export function AppShell() {
               setGroceryList((currentList) => adjustGroceryItemQuantity(currentList, itemId, delta))
             }
             onClearList={() => setGroceryList((currentList) => clearGroceryList(currentList))}
+            onShareList={shareGroceryList}
+            onImportList={openImportDialog}
           />
         );
       case 'items':
@@ -670,6 +912,41 @@ export function AppShell() {
         onAddToList={openAddToList}
         onToggleFavorite={toggleFavorite}
         onEdit={() => setShowRecipeEdit(true)}
+        onShare={shareRecipe}
+      />
+
+      <ShareImportModal
+        visible={showImportDialog}
+        errorMessage={importError}
+        onClose={() => {
+          setShowImportDialog(false);
+          setImportError(null);
+        }}
+        onSubmit={submitImportDialog}
+      />
+
+      <ImportPreviewModal
+        visible={pendingImport !== null}
+        title={t('importPreview.title')}
+        message={
+          pendingImport?.payload.kind === 'recipe' && pendingImport.payload.recipe
+            ? t('importPreview.recipeMessage', {
+                name: pendingImport.payload.recipe.title,
+                count: pendingImport.payload.recipe.ingredients.length,
+              })
+            : t('importPreview.listMessage', {
+                name: groceryList.name,
+                count: pendingImport?.payload.groceryList?.items.length ?? 0,
+              })
+        }
+        missingItems={pendingImport?.missingCatalogItems ?? []}
+        confirmLabel={
+          pendingImport?.payload.kind === 'recipe'
+            ? t('importPreview.confirmRecipe')
+            : t('importPreview.confirmList')
+        }
+        onCancel={() => setPendingImport(null)}
+        onConfirm={importSharedPayload}
       />
 
       <AddToListModal

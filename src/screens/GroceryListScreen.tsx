@@ -21,6 +21,8 @@ type GroceryListScreenProps = {
   onSetItemQuantity: (itemId: string, quantity: number) => void;
   onAdjustItemQuantity: (itemId: string, delta: number) => void;
   onClearList: () => void;
+  onShareList: () => void;
+  onImportList: () => void;
 };
 
 type ListFilter = 'all' | 'remaining' | 'bought';
@@ -33,6 +35,8 @@ export function GroceryListScreen({
   onSetItemQuantity,
   onAdjustItemQuantity,
   onClearList,
+  onShareList,
+  onImportList,
 }: GroceryListScreenProps) {
   const { colors, themeName } = useTheme();
   const { t, isRTL } = useI18n();
@@ -98,21 +102,44 @@ export function GroceryListScreen({
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.topRow}>
           <Text style={styles.title}>{t('list.title')}</Text>
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.topAction} onPress={() => setShowClearModal(true)}>
-              <Text style={styles.topActionText}>{t('common.clear')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.topAction, styles.topActionPrimary, editMode && styles.topActionEditActive]}
-              onPress={() => {
-                setEditMode((currentMode) => !currentMode);
-                setItemQuantityDrafts({});
-              }}
-            >
-              <Ionicons name="create-outline" size={16} color={colors.white} />
-              <Text style={styles.topActionPrimaryText}>{editMode ? t('list.done') : t('list.edit')}</Text>
-            </TouchableOpacity>
-          </View>
+        </View>
+
+        <View style={styles.actionRow}>
+          <TouchableOpacity
+            style={styles.topIconAction}
+            onPress={onImportList}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.import')}
+          >
+            <Ionicons name="download-outline" size={17} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.topIconAction}
+            onPress={onShareList}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.share')}
+          >
+            <Ionicons name="share-social-outline" size={17} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.topIconAction}
+            onPress={() => setShowClearModal(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.clear')}
+          >
+            <Ionicons name="trash-outline" size={17} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.topIconAction, styles.topActionPrimary, editMode && styles.topActionEditActive]}
+            onPress={() => {
+              setEditMode((currentMode) => !currentMode);
+              setItemQuantityDrafts({});
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={editMode ? t('list.done') : t('list.edit')}
+          >
+            <Ionicons name={editMode ? 'checkmark' : 'create-outline'} size={16} color={colors.white} />
+          </TouchableOpacity>
         </View>
 
         <View style={styles.storePill}>
@@ -277,13 +304,14 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isDark: boo
   },
   topRow: {
     flexDirection: isRTL ? 'row-reverse' : 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
   },
   actionRow: {
     flexDirection: isRTL ? 'row-reverse' : 'row',
     gap: 8,
+    marginBottom: 14,
   },
   title: {
     color: colors.title,
@@ -292,33 +320,22 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isDark: boo
     fontWeight: '800',
     textAlign: isRTL ? 'right' : 'left',
   },
-  topAction: {
+  topIconAction: {
+    width: 34,
     height: 34,
-    paddingHorizontal: 14,
-    borderRadius: radius.pill,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: isDark ? colors.surfaceMuted : '#EFE8DA',
     borderWidth: 1,
     borderColor: colors.border,
-    flexDirection: isRTL ? 'row-reverse' : 'row',
-    gap: 6,
   },
   topActionPrimary: {
     backgroundColor: colors.accent,
+    borderColor: colors.accent,
   },
   topActionEditActive: {
     backgroundColor: colors.accent,
-  },
-  topActionText: {
-    color: colors.text,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  topActionPrimaryText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: '700',
   },
   storePill: {
     alignSelf: 'flex-start',
