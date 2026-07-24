@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as FileSystem from 'expo-file-system/legacy';
 import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -39,6 +40,21 @@ type DraftIngredient = {
 const difficultyOptions = ['Easy', 'Medium', 'Hard'] as const;
 
 const fallbackImage = '';
+const recipeImageDirectory = `${FileSystem.documentDirectory ?? ''}recipe-images/`;
+
+const persistRecipeImage = async (uri: string) => {
+  if (!FileSystem.documentDirectory || uri.startsWith(FileSystem.documentDirectory)) {
+    return uri;
+  }
+
+  await FileSystem.makeDirectoryAsync(recipeImageDirectory, { intermediates: true });
+  const extension = uri.split('?')[0].split('.').pop()?.toLowerCase();
+  const safeExtension = extension && /^[a-z0-9]+$/.test(extension) ? extension : 'jpg';
+  const destination = `${recipeImageDirectory}recipe-${Date.now()}.${safeExtension}`;
+
+  await FileSystem.copyAsync({ from: uri, to: destination });
+  return destination;
+};
 
 const composeAmount = (quantity: number, unitLabel?: string) =>
   unitLabel ? `${quantity} ${unitLabel}` : `${quantity}`;
@@ -253,7 +269,11 @@ export function RecipeEditModal({
     });
 
     if (!result.canceled && result.assets.length) {
-      setImage(result.assets[0].uri);
+      try {
+        setImage(await persistRecipeImage(result.assets[0].uri));
+      } catch {
+        Alert.alert(t('recipeEdit.imageSaveTitle'), t('recipeEdit.imageSaveMessage'));
+      }
     }
   };
 

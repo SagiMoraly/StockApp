@@ -62,3 +62,13 @@ export type QuickSelectItem = {
   unitLabel?: string;
   colors: string[];
 };
+
+export type StockUpData = {
+  version: number;
+  updatedAt: string;
+  itemTypes: string[];
+  quickSelectItems: QuickSelectItem[];
+  recipeList: Recipe[];
+  favoriteRecipeIds: string[];
+  groceryList: GroceryList;
+};

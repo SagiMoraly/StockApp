@@ -9,6 +9,8 @@ import { RecipeDetailModal } from './components/RecipeDetailModal';
 import { RecipeEditModal } from './components/RecipeEditModal';
 import { SuccessModal } from './components/SuccessModal';
 import { ThemeSettingsModal } from './components/ThemeSettingsModal';
+import { useAuth } from './auth/AuthProvider';
+import { downloadUserData, uploadUserData } from './cloud/googleDrive';
 import {
   categories,
   initialGroceryList,
@@ -21,15 +23,18 @@ import { HomeScreen } from './screens/HomeScreen';
 import { PantryScreen } from './screens/PantryScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { useTheme } from './ThemeProvider';
-import { GrocerySectionId, QuickAddSelection, QuickSelectItem, Recipe, RecipeFilter, TabKey } from './types';
+import { GrocerySectionId, QuickAddSelection, QuickSelectItem, Recipe, RecipeFilter, StockUpData, TabKey } from './types';
 import {
   adjustGroceryItemQuantity,
   addIngredientsToList,
   addQuickItemsToList,
   clearGroceryList,
+  removeGroceryItem,
   setGroceryItemQuantity,
   toggleGroceryItem,
 } from './utils/grocery';
+
+type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'failed';
 
 const ITEM_STORAGE_KEY = 'stockup.catalog.items';
 const TYPE_STORAGE_KEY = 'stockup.catalog.types';
@@ -45,7 +50,7 @@ const slugifyLabel = (value: string) =>
   value
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
     .replace(/^-|-$/g, '');
 
 const buildRecipeId = (title: string) => {
@@ -156,6 +161,7 @@ const createDefaultState = () => ({
 
 export function AppShell() {
   const { colors, themeName } = useTheme();
+  const { mode, accessToken, logout, signInWithGoogle } = useAuth();
   const defaultState = createDefaultState();
   const [itemTypes, setItemTypes] = useState<string[]>(defaultState.itemTypes);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
@@ -174,6 +180,9 @@ export function AppShell() {
   const [showThemeSettings, setShowThemeSettings] = useState(false);
   const [lastAddedCount, setLastAddedCount] = useState(0);
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const [cloudSyncReady, setCloudSyncReady] = useState(mode !== 'google');
+  const [cloudSyncStatus, setCloudSyncStatus] = useState<CloudSyncStatus>('idle');
+  const [cloudSyncAttempt, setCloudSyncAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -274,9 +283,60 @@ export function AppShell() {
   }, []);
 
   useEffect(() => {
+    if (!storageLoaded || mode !== 'google' || !accessToken) {
+      setCloudSyncReady(mode !== 'google');
+      setCloudSyncStatus(mode === 'google' ? 'idle' : 'synced');
+      return;
+    }
+
+    let active = true;
+    setCloudSyncReady(false);
+    setCloudSyncStatus('syncing');
+
+    const loadCloudData = async () => {
+      try {
+        const cloudData = await downloadUserData(accessToken);
+
+        if (active && cloudData) {
+          setItemTypes(cloudData.itemTypes);
+          setQuickSelectItems(cloudData.quickSelectItems);
+          setRecipeList(cloudData.recipeList);
+          setFavoriteRecipeIds(cloudData.favoriteRecipeIds);
+          setGroceryList(cloudData.groceryList);
+        }
+        if (active) {
+          setCloudSyncReady(true);
+          setCloudSyncStatus('synced');
+        }
+      } catch {
+        if (active) {
+          setCloudSyncReady(false);
+          setCloudSyncStatus('failed');
+        }
+      }
+    };
+
+    void loadCloudData();
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken, mode, storageLoaded, cloudSyncAttempt]);
+
+  useEffect(() => {
     if (!storageLoaded) {
       return;
     }
+
+    const data: StockUpData = {
+      version: Number(STORAGE_SCHEMA_VERSION),
+      updatedAt: new Date().toISOString(),
+      itemTypes,
+      quickSelectItems,
+      recipeList,
+      favoriteRecipeIds,
+      groceryList,
+    };
 
     void AsyncStorage.multiSet([
       [STORAGE_VERSION_KEY, STORAGE_SCHEMA_VERSION],
@@ -286,7 +346,14 @@ export function AppShell() {
       [FAVORITES_STORAGE_KEY, JSON.stringify(favoriteRecipeIds)],
       [GROCERY_STORAGE_KEY, JSON.stringify(groceryList)],
     ]);
-  }, [storageLoaded, itemTypes, quickSelectItems, recipeList, favoriteRecipeIds, groceryList]);
+
+    if (cloudSyncReady && accessToken) {
+      setCloudSyncStatus('syncing');
+      void uploadUserData(accessToken, data)
+        .then(() => setCloudSyncStatus('synced'))
+        .catch(() => setCloudSyncStatus('failed'));
+    }
+  }, [accessToken, cloudSyncReady, favoriteRecipeIds, groceryList, itemTypes, quickSelectItems, recipeList, storageLoaded]);
 
   const query = searchQuery.trim().toLowerCase();
   const selectedRecipe = recipeList.find((recipe) => recipe.id === selectedRecipeId) ?? null;
@@ -362,6 +429,17 @@ export function AppShell() {
         ? currentIds.filter((currentId) => currentId !== recipeId)
         : [...currentIds, recipeId],
     );
+  };
+
+  const deleteRecipe = (recipeId: string) => {
+    setRecipeList((currentRecipes) => currentRecipes.filter((recipe) => recipe.id !== recipeId));
+    setFavoriteRecipeIds((currentIds) => currentIds.filter((currentId) => currentId !== recipeId));
+    setSelectedRecipeId(null);
+    setShowRecipeEdit(false);
+  };
+
+  const deleteGroceryItem = (itemId: string) => {
+    setGroceryList((currentList) => removeGroceryItem(currentList, itemId));
   };
 
   const toggleIngredientSelection = (ingredientId: string) => {
@@ -603,6 +681,7 @@ export function AppShell() {
             onRecipePress={openRecipe}
             onToggleFavorite={toggleFavorite}
             onAddRecipePress={openCreateRecipe}
+            onDeleteRecipe={deleteRecipe}
           />
         );
       case 'list':
@@ -619,6 +698,7 @@ export function AppShell() {
               setGroceryList((currentList) => adjustGroceryItemQuantity(currentList, itemId, delta))
             }
             onClearList={() => setGroceryList((currentList) => clearGroceryList(currentList))}
+            onDeleteItem={deleteGroceryItem}
           />
         );
       case 'items':
@@ -670,6 +750,7 @@ export function AppShell() {
         onAddToList={openAddToList}
         onToggleFavorite={toggleFavorite}
         onEdit={() => setShowRecipeEdit(true)}
+        onDelete={deleteRecipe}
       />
 
       <AddToListModal
@@ -718,6 +799,14 @@ export function AppShell() {
       <ThemeSettingsModal
         visible={showThemeSettings}
         onClose={() => setShowThemeSettings(false)}
+        isGoogleConnected={mode === 'google'}
+        syncStatus={cloudSyncStatus}
+        onRetrySync={() => setCloudSyncAttempt((currentAttempt) => currentAttempt + 1)}
+        onLogout={() => {
+          setShowThemeSettings(false);
+          void logout();
+        }}
+        onSignIn={signInWithGoogle}
       />
     </SafeAreaView>
   );

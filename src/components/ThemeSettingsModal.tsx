@@ -8,11 +8,16 @@ import { radius, ThemePreference } from '../theme';
 type ThemeSettingsModalProps = {
   visible: boolean;
   onClose: () => void;
+  isGoogleConnected: boolean;
+  onLogout: () => void;
+  onSignIn: () => void;
+  syncStatus: 'idle' | 'syncing' | 'synced' | 'failed';
+  onRetrySync: () => void;
 };
 
 const themeOptions: ThemePreference[] = ['system', 'light', 'dark'];
 
-export function ThemeSettingsModal({ visible, onClose }: ThemeSettingsModalProps) {
+export function ThemeSettingsModal({ visible, onClose, isGoogleConnected, onLogout, onSignIn, syncStatus, onRetrySync }: ThemeSettingsModalProps) {
   const { colors, themePreference, setThemePreference } = useTheme();
   const { language, setLanguage, t, isRTL } = useI18n();
   const styles = useMemo(() => createStyles(isRTL), [isRTL]);
@@ -101,6 +106,44 @@ export function ThemeSettingsModal({ visible, onClose }: ThemeSettingsModalProps
               );
             })}
           </View>
+
+          <Text style={[styles.sectionLabel, { color: colors.textMuted }]}>{t('settings.accountTitle')}</Text>
+          <Text style={[styles.optionDescription, { color: colors.textMuted }]}>
+            {isGoogleConnected ? t('settings.googleConnected') : t('settings.offlineMode')}
+          </Text>
+          {isGoogleConnected ? (
+            <>
+              <Text style={[styles.optionDescription, { color: syncStatus === 'failed' ? colors.danger : colors.textMuted }]}>
+                {t(`settings.sync.${syncStatus}`)}
+              </Text>
+              {syncStatus === 'failed' ? (
+                <TouchableOpacity
+                  style={[styles.closeButton, { backgroundColor: colors.accent }]}
+                  onPress={onRetrySync}
+                  activeOpacity={0.92}
+                >
+                  <Text style={[styles.closeButtonText, { color: colors.white }]}>{t('settings.retrySync')}</Text>
+                </TouchableOpacity>
+              ) : null}
+            </>
+          ) : null}
+          {isGoogleConnected ? (
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: colors.danger }]}
+              onPress={onLogout}
+              activeOpacity={0.92}
+            >
+              <Text style={[styles.closeButtonText, { color: colors.white }]}>{t('settings.logout')}</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.closeButton, { backgroundColor: colors.accent }]}
+              onPress={onSignIn}
+              activeOpacity={0.92}
+            >
+              <Text style={[styles.closeButtonText, { color: colors.white }]}>{t('auth.google')}</Text>
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={[styles.closeButton, { backgroundColor: colors.accent }]}

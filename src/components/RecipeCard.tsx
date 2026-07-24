@@ -13,6 +13,7 @@ type RecipeCardProps = {
   compact?: boolean;
   favorite?: boolean;
   onToggleFavorite?: (recipeId: string) => void;
+  onLongPress?: (recipe: Recipe) => void;
 };
 
 export function RecipeCard({
@@ -21,6 +22,7 @@ export function RecipeCard({
   compact = false,
   favorite = false,
   onToggleFavorite,
+  onLongPress,
 }: RecipeCardProps) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
@@ -31,6 +33,7 @@ export function RecipeCard({
     <TouchableOpacity
       style={[styles.card, compact ? styles.compactCard : styles.fullCard]}
       onPress={() => onPress(recipe)}
+      onLongPress={() => onLongPress?.(recipe)}
       activeOpacity={0.92}
     >
       {hasImage ? (

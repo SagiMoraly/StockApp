@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   Image,
   Modal,
@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 
+import { ConfirmActionModal } from './ConfirmActionModal';
 import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
@@ -24,6 +25,7 @@ type RecipeDetailModalProps = {
   onAddToList: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
   onEdit: () => void;
+  onDelete: (recipeId: string) => void;
 };
 
 export function RecipeDetailModal({
@@ -34,21 +36,27 @@ export function RecipeDetailModal({
   onAddToList,
   onToggleFavorite,
   onEdit,
+  onDelete,
 }: RecipeDetailModalProps) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 
   if (!recipe) {
     return null;
   }
 
+  const close = () => {
+    setShowDeleteConfirmation(false);
+    onClose();
+  };
   const hasImage = recipe.image.trim().length > 0;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
       <View style={styles.overlay}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
+        <Pressable style={styles.backdrop} onPress={close} />
         <View style={styles.sheet}>
           {hasImage ? (
             <Image source={{ uri: recipe.image }} style={styles.image} />
@@ -58,7 +66,7 @@ export function RecipeDetailModal({
               <Text style={styles.imagePlaceholderText}>{t('recipeDetail.addPhoto')}</Text>
             </View>
           )}
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity style={styles.closeButton} onPress={close}>
             <Ionicons name="close" size={20} color={colors.text} />
           </TouchableOpacity>
 
@@ -69,9 +77,14 @@ export function RecipeDetailModal({
                 <Text style={styles.subtitle}>{recipe.subtitle}</Text>
                 <Text style={styles.meta}>{recipe.time}  •  {recipe.difficulty}</Text>
               </View>
-              <TouchableOpacity style={[styles.heartButton, favorite && styles.heartButtonActive]} onPress={() => onToggleFavorite(recipe.id)}>
-                <Ionicons name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.white : colors.text} />
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.deleteCircleButton} onPress={() => setShowDeleteConfirmation(true)}>
+                  <Ionicons name="trash-outline" size={17} color={colors.danger} />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.heartButton, favorite && styles.heartButtonActive]} onPress={() => onToggleFavorite(recipe.id)}>
+                  <Ionicons name={favorite ? 'heart' : 'heart-outline'} size={18} color={favorite ? colors.white : colors.text} />
+                </TouchableOpacity>
+              </View>
             </View>
 
             <Text style={styles.description}>{recipe.description}</Text>
@@ -100,6 +113,17 @@ export function RecipeDetailModal({
           </View>
         </View>
       </View>
+      <ConfirmActionModal
+        visible={showDeleteConfirmation}
+        title={t('recipeDetail.deleteTitle')}
+        message={t('recipeDetail.deleteMessage', { name: recipe.title })}
+        confirmLabel={t('common.delete')}
+        onCancel={() => setShowDeleteConfirmation(false)}
+        onConfirm={() => {
+          onDelete(recipe.id);
+          close();
+        }}
+      />
     </Modal>
   );
 }
@@ -249,6 +273,20 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     color: colors.accent,
     fontWeight: '700',
     fontSize: 15,
+  },
+  headerActions: {
+    flexDirection: isRTL ? 'row-reverse' : 'row',
+    gap: 8,
+  },
+  deleteCircleButton: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: colors.danger,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.surfaceMuted,
   },
   actionButton: {
     borderRadius: radius.sm,

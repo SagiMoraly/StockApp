@@ -40,6 +40,7 @@ export const lightColors = {
   favoriteOverlay: 'rgba(38, 48, 38, 0.36)',
   metaText: '#666D66',
   success: '#7FB06A',
+  danger: '#9F3C2F',
   white: '#FFFFFF',
   overlay: 'rgba(16, 24, 16, 0.18)',
 };
@@ -86,6 +87,7 @@ export const darkColors: ThemeColors = {
   favoriteOverlay: 'rgba(13, 18, 14, 0.55)',
   metaText: '#A7B2A7',
   success: '#8FCC78',
+  danger: '#D67A6D',
   white: '#FFFFFF',
   overlay: 'rgba(4, 7, 5, 0.55)',
 };

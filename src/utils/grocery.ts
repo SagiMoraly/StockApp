@@ -29,7 +29,7 @@ const sectionByName = (name: string): GrocerySectionId => {
 };
 
 const buildItemId = (sectionId: GrocerySectionId, name: string) =>
-  `${sectionId}-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')}`;
+  `${sectionId}-${name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-|-$/g, '')}`;
 
 export const normalizeQuantity = (value: number) => {
   if (!Number.isFinite(value)) {

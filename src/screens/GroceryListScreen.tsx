@@ -21,6 +21,7 @@ type GroceryListScreenProps = {
   onSetItemQuantity: (itemId: string, quantity: number) => void;
   onAdjustItemQuantity: (itemId: string, delta: number) => void;
   onClearList: () => void;
+  onDeleteItem: (itemId: string) => void;
 };
 
 type ListFilter = 'all' | 'remaining' | 'bought';
@@ -33,6 +34,7 @@ export function GroceryListScreen({
   onSetItemQuantity,
   onAdjustItemQuantity,
   onClearList,
+  onDeleteItem,
 }: GroceryListScreenProps) {
   const { colors, themeName } = useTheme();
   const { t, isRTL } = useI18n();
@@ -44,6 +46,7 @@ export function GroceryListScreen({
   const [itemQuantityDrafts, setItemQuantityDrafts] = useState<Record<string, string>>({});
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
+  const [pendingItemDelete, setPendingItemDelete] = useState<GroceryItem | null>(null);
 
   useEffect(() => {
     setCollapsedSections((currentState) => {
@@ -210,7 +213,7 @@ export function GroceryListScreen({
                       }
 
                       return (
-                        <TouchableOpacity key={item.id} style={styles.itemRow} onPress={() => onToggleItem(item.id)}>
+                        <TouchableOpacity key={item.id} style={styles.itemRow} onPress={() => onToggleItem(item.id)} onLongPress={() => setPendingItemDelete(item)}>
                           <View style={[styles.checkbox, item.checked && styles.checkboxChecked]}>
                             {item.checked ? <Ionicons name="checkmark" size={14} color={colors.white} /> : null}
                           </View>
@@ -263,6 +266,20 @@ export function GroceryListScreen({
         onConfirm={() => {
           onClearList();
           setShowClearModal(false);
+        }}
+      />
+
+      <ConfirmActionModal
+        visible={pendingItemDelete !== null}
+        title={t('list.deleteItemTitle')}
+        message={pendingItemDelete ? t('list.deleteItemMessage', { name: pendingItemDelete.name }) : ''}
+        confirmLabel={t('common.delete')}
+        onCancel={() => setPendingItemDelete(null)}
+        onConfirm={() => {
+          if (pendingItemDelete) {
+            onDeleteItem(pendingItemDelete.id);
+          }
+          setPendingItemDelete(null);
         }}
       />
     </>

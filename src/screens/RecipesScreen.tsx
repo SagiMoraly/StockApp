@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { RecipeCard } from '../components/RecipeCard';
+import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import { useI18n } from '../LocalizationProvider';
 import { SearchField } from '../components/SearchField';
 import { useTheme } from '../ThemeProvider';
@@ -20,6 +21,7 @@ type RecipesScreenProps = {
   onRecipePress: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
   onAddRecipePress: () => void;
+  onDeleteRecipe: (recipeId: string) => void;
 };
 
 export function RecipesScreen({
@@ -33,11 +35,13 @@ export function RecipesScreen({
   onRecipePress,
   onToggleFavorite,
   onAddRecipePress,
+  onDeleteRecipe,
 }: RecipesScreenProps) {
   const { colors } = useTheme();
   const { t, isRTL } = useI18n();
   const styles = useMemo(() => createStyles(colors, isRTL), [colors, isRTL]);
   const categoriesScrollRef = useRef<ScrollView>(null);
+  const [pendingDelete, setPendingDelete] = useState<Recipe | null>(null);
 
   useEffect(() => {
     if (!isRTL) {
@@ -109,6 +113,7 @@ export function RecipesScreen({
             onPress={onRecipePress}
             favorite={favoriteRecipeIds.includes(recipe.id)}
             onToggleFavorite={onToggleFavorite}
+            onLongPress={setPendingDelete}
           />
         ))}
 
@@ -119,6 +124,19 @@ export function RecipesScreen({
           </View>
         ) : null}
       </View>
+      <ConfirmActionModal
+        visible={pendingDelete !== null}
+        title={t('recipeDetail.deleteTitle')}
+        message={pendingDelete ? t('recipeDetail.deleteMessage', { name: pendingDelete.title }) : ''}
+        confirmLabel={t('common.delete')}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={() => {
+          if (pendingDelete) {
+            onDeleteRecipe(pendingDelete.id);
+          }
+          setPendingDelete(null);
+        }}
+      />
     </ScrollView>
   );
 }

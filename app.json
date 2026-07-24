@@ -3,7 +3,7 @@
     "name": "StockUp",
     "slug": "stockup",
     "version": "1.0.0",
-    "scheme": "stockup",
+    "scheme": "com.stockup.mobile",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -36,6 +36,9 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
+      "googleWebClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
+      "googleAndroidClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
+      "googleIosClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "supportEmail": "support@stockup.app",
       "privacyPolicyUrl": "https://stockup.app/privacy",
       "supportUrl": "https://stockup.app/support",
@@ -54,7 +57,9 @@
         {
           "photosPermission": "Allow StockUp to access your photos so you can add recipe images."
         }
-      ]
+      ],
+      "expo-web-browser",
+      "expo-secure-store"
     ]
   }
 }
