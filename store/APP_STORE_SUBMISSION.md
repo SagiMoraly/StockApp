@@ -2,7 +2,7 @@
 
 ## Listing Fields
 
-- App Name: StockUp
+- App Name: StockApp
 - Subtitle: Grocery Lists and Recipes
 - Promotional Text: Build grocery lists from your own staples and recipes in seconds.
 - Keywords: grocery list, pantry, recipes, meal planner, shopping list, kitchen
@@ -12,9 +12,9 @@
 
 ## Description
 
-StockUp helps you organize your kitchen planning in one place.
+StockApp helps you organize your kitchen planning in one place.
 
-Use StockUp to:
+Use StockApp to:
 
 - Build and manage your own grocery list
 - Create recipes and turn ingredients into shopping items
@@ -22,7 +22,7 @@ Use StockUp to:
 - Keep everything stored locally on your device
 - Optionally sync your data to Google Drive when signed in
 
-StockUp works offline without an account. Google sign-in is optional and enables syncing to Google Drive. Photo access is only requested if you choose to add an image to a recipe.
+StockApp works offline without an account. Google sign-in is optional and enables syncing to Google Drive. Photo access is only requested if you choose to add an image to a recipe.
 
 ## Review Notes
 
@@ -34,6 +34,6 @@ StockUp works offline without an account. Google sign-in is optional and enables
 
 ## URLs To Replace Before Submission
 
-- Support URL: https://stockup.app/support
-- Privacy Policy URL: https://stockup.app/privacy
-- Marketing URL: https://stockup.app
+- Support URL: https://stockapp.app/support
+- Privacy Policy URL: https://stockapp.app/privacy
+- Marketing URL: https://stockapp.app

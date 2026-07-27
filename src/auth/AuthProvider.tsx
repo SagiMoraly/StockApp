@@ -7,8 +7,8 @@ import * as Google from 'expo-auth-session/providers/google';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const TOKEN_KEY = 'stockup.google.access-token';
-const TOKEN_EXPIRY_KEY = 'stockup.google.token-expiry';
+const TOKEN_KEY = 'stockapp.google.access-token';
+const TOKEN_EXPIRY_KEY = 'stockapp.google.token-expiry';
 
 export type AuthMode = 'loading' | 'login' | 'offline' | 'google';
 
@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     androidClientId: Platform.OS === 'android' ? extra?.googleAndroidClientId : undefined,
     scopes: ['https://www.googleapis.com/auth/drive.appdata'],
   }, {
-    native: 'com.stockup.mobile:/oauthredirect',
+    native: 'com.stockapp.mobile:/oauthredirect',
   });
 
   useEffect(() => {

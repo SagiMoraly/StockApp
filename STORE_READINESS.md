@@ -11,7 +11,7 @@ This project now includes the first release-hardening pass:
 
 Before uploading to the stores, finish the remaining release work:
 
-1. Replace placeholder identifiers if `com.stockup.mobile` is not your final package name.
+1. Replace placeholder identifiers if `com.stockapp.mobile` is not your final package name.
 2. Replace placeholder support and privacy URLs with hosted production URLs.
 3. Add the store screenshots and marketing graphics listed in `store/STORE_ASSETS.md`.
 4. Test on at least one physical Android device and one physical iPhone.

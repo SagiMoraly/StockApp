@@ -57,7 +57,7 @@ export function HomeScreen({
   return (
     <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       <View style={styles.headerRow}>
-          <Text style={styles.logo}>StockUp</Text>
+          <Text style={styles.logo}>StockApp</Text>
         <TouchableOpacity
           style={styles.settingsButton}
           onPress={onOpenThemeSettings}

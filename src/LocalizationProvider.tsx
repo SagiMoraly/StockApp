@@ -15,7 +15,7 @@ type LocalizationContextValue = {
   setLanguage: (nextLanguage: AppLanguage) => Promise<{ restartRequired: boolean }>;
 };
 
-const LANGUAGE_STORAGE_KEY = 'stockup.language.preference';
+const LANGUAGE_STORAGE_KEY = 'stockapp.language.preference';
 const DEFAULT_LANGUAGE: AppLanguage = 'en';
 
 const translations: Record<AppLanguage, TranslationCatalog> = {
@@ -217,7 +217,7 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'success.itemsAdded': '{{count}} items added!',
     'success.addedToList': 'They\'ve been added to "{{name}}".',
     'success.viewList': 'View Grocery List',
-    'auth.title': 'Keep your StockUp data safe',
+    'auth.title': 'Keep your StockApp data safe',
     'auth.description': 'Sign in with Google to save your data on every device, or continue offline on this device.',
     'auth.google': 'Continue with Google',
     'auth.offline': 'Continue offline',
@@ -421,7 +421,7 @@ const translations: Record<AppLanguage, TranslationCatalog> = {
     'success.itemsAdded': '{{count}} פריטים נוספו!',
     'success.addedToList': 'הם נוספו אל "{{name}}".',
     'success.viewList': 'מעבר לרשימת הקניות',
-    'auth.title': 'שמרו על נתוני StockUp',
+    'auth.title': 'שמרו על נתוני StockApp',
     'auth.description': 'התחברו עם Google כדי לשמור את הנתונים בכל מכשיר, או המשיכו במצב לא מקוון.',
     'auth.google': 'המשך עם Google',
     'auth.offline': 'המשך ללא התחברות',

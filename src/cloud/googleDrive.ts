@@ -1,6 +1,7 @@
-import { StockUpData } from '../types';
+import { StockAppData } from '../types';
 
-const FILE_NAME = 'stockup-data.json';
+const FILE_NAME = 'stockapp-data.json';
+const LEGACY_FILE_NAME = 'stockup-data.json';
 const DRIVE_API = 'https://www.googleapis.com/drive/v3';
 const UPLOAD_API = 'https://www.googleapis.com/upload/drive/v3/files';
 
@@ -94,7 +95,7 @@ const isGroceryList = (value: unknown) => {
   );
 };
 
-export function isValidStockUpData(value: unknown): value is StockUpData {
+export function isValidStockAppData(value: unknown): value is StockAppData {
   if (!isRecord(value)) {
     return false;
   }
@@ -128,13 +129,19 @@ async function driveRequest(token: string, url: string, init?: RequestInit) {
 }
 
 async function findDataFile(token: string): Promise<DriveFile | null> {
-  const query = encodeURIComponent(`name = '${FILE_NAME}' and 'appDataFolder' in parents and trashed = false`);
-  const response = await driveRequest(token, `${DRIVE_API}/files?q=${query}&spaces=appDataFolder&fields=files(id,modifiedTime)`);
-  const result = (await response.json()) as { files?: DriveFile[] };
-  return result.files?.[0] ?? null;
+  for (const fileName of [FILE_NAME, LEGACY_FILE_NAME]) {
+    const query = encodeURIComponent(`name = '${fileName}' and 'appDataFolder' in parents and trashed = false`);
+    const response = await driveRequest(token, `${DRIVE_API}/files?q=${query}&spaces=appDataFolder&fields=files(id,modifiedTime)`);
+    const result = (await response.json()) as { files?: DriveFile[] };
+    if (result.files?.[0]) {
+      return result.files[0];
+    }
+  }
+
+  return null;
 }
 
-export async function downloadUserData(token: string): Promise<StockUpData | null> {
+export async function downloadUserData(token: string): Promise<StockAppData | null> {
   const file = await findDataFile(token);
 
   if (!file) {
@@ -144,17 +151,17 @@ export async function downloadUserData(token: string): Promise<StockUpData | nul
   const response = await driveRequest(token, `${DRIVE_API}/files/${file.id}?alt=media`);
   const data: unknown = await response.json();
 
-  if (!isValidStockUpData(data)) {
-    throw new Error('Google Drive returned invalid StockUp data');
+  if (!isValidStockAppData(data)) {
+    throw new Error('Google Drive returned invalid StockApp data');
   }
 
   return data;
 }
 
-export async function uploadUserData(token: string, data: StockUpData) {
+export async function uploadUserData(token: string, data: StockAppData) {
   const file = await findDataFile(token);
-  const metadata = JSON.stringify(file ? {} : { name: FILE_NAME, parents: ['appDataFolder'] });
-  const boundary = `stockup-${Date.now()}`;
+  const metadata = JSON.stringify(file ? { name: FILE_NAME } : { name: FILE_NAME, parents: ['appDataFolder'] });
+  const boundary = `stockapp-${Date.now()}`;
   const body = [
     `--${boundary}`,
     'Content-Type: application/json; charset=UTF-8',

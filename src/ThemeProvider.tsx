@@ -4,7 +4,7 @@ import { useColorScheme } from 'react-native';
 
 import { darkColors, lightColors, ThemeColors, ThemeName, ThemePreference } from './theme';
 
-const THEME_PREFERENCE_STORAGE_KEY = 'stockup.theme.preference';
+const THEME_PREFERENCE_STORAGE_KEY = 'stockapp.theme.preference';
 
 type ThemeContextValue = {
   colors: ThemeColors;

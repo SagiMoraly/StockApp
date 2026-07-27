@@ -23,7 +23,7 @@ import { HomeScreen } from './screens/HomeScreen';
 import { PantryScreen } from './screens/PantryScreen';
 import { RecipesScreen } from './screens/RecipesScreen';
 import { useTheme } from './ThemeProvider';
-import { GrocerySectionId, QuickAddSelection, QuickSelectItem, Recipe, RecipeFilter, StockUpData, TabKey } from './types';
+import { GrocerySectionId, QuickAddSelection, QuickSelectItem, Recipe, RecipeFilter, StockAppData, TabKey } from './types';
 import {
   adjustGroceryItemQuantity,
   addIngredientsToList,
@@ -36,12 +36,20 @@ import {
 
 type CloudSyncStatus = 'idle' | 'syncing' | 'synced' | 'failed';
 
-const ITEM_STORAGE_KEY = 'stockup.catalog.items';
-const TYPE_STORAGE_KEY = 'stockup.catalog.types';
-const RECIPE_STORAGE_KEY = 'stockup.recipes';
-const FAVORITES_STORAGE_KEY = 'stockup.recipes.favorites';
-const GROCERY_STORAGE_KEY = 'stockup.grocery.list';
-const STORAGE_VERSION_KEY = 'stockup.storage.version';
+const ITEM_STORAGE_KEY = 'stockapp.catalog.items';
+const TYPE_STORAGE_KEY = 'stockapp.catalog.types';
+const RECIPE_STORAGE_KEY = 'stockapp.recipes';
+const FAVORITES_STORAGE_KEY = 'stockapp.recipes.favorites';
+const GROCERY_STORAGE_KEY = 'stockapp.grocery.list';
+const STORAGE_VERSION_KEY = 'stockapp.storage.version';
+const LEGACY_STORAGE_KEYS = [
+  'stockup.storage.version',
+  'stockup.catalog.items',
+  'stockup.catalog.types',
+  'stockup.recipes',
+  'stockup.recipes.favorites',
+  'stockup.grocery.list',
+];
 const STORAGE_SCHEMA_VERSION = '2';
 
 const initialItemTypes = [...starterItemTypes];
@@ -196,13 +204,17 @@ export function AppShell() {
           RECIPE_STORAGE_KEY,
           FAVORITES_STORAGE_KEY,
           GROCERY_STORAGE_KEY,
+          ...LEGACY_STORAGE_KEYS,
         ]);
-        const storedVersion = values.find(([key]) => key === STORAGE_VERSION_KEY)?.[1];
-        const storedItems = values.find(([key]) => key === ITEM_STORAGE_KEY)?.[1];
-        const storedTypes = values.find(([key]) => key === TYPE_STORAGE_KEY)?.[1];
-        const storedRecipes = values.find(([key]) => key === RECIPE_STORAGE_KEY)?.[1];
-        const storedFavorites = values.find(([key]) => key === FAVORITES_STORAGE_KEY)?.[1];
-        const storedGroceryList = values.find(([key]) => key === GROCERY_STORAGE_KEY)?.[1];
+        const readStoredValue = (key: string, legacyKey: string) =>
+          values.find(([storedKey]) => storedKey === key)?.[1] ?? values.find(([storedKey]) => storedKey === legacyKey)?.[1];
+        const storedVersion = readStoredValue(STORAGE_VERSION_KEY, LEGACY_STORAGE_KEYS[0]);
+        const storedItems = readStoredValue(ITEM_STORAGE_KEY, LEGACY_STORAGE_KEYS[1]);
+        const storedTypes = readStoredValue(TYPE_STORAGE_KEY, LEGACY_STORAGE_KEYS[2]);
+        const storedRecipes = readStoredValue(RECIPE_STORAGE_KEY, LEGACY_STORAGE_KEYS[3]);
+        const storedFavorites = readStoredValue(FAVORITES_STORAGE_KEY, LEGACY_STORAGE_KEYS[4]);
+        const storedGroceryList = readStoredValue(GROCERY_STORAGE_KEY, LEGACY_STORAGE_KEYS[5]);
+        const hasLegacyStorage = values.some(([key, value]) => LEGACY_STORAGE_KEYS.includes(key) && value !== null);
 
         const nextItems = storedItems ? JSON.parse(storedItems) : null;
         const nextTypes = storedTypes ? JSON.parse(storedTypes) : null;
@@ -239,7 +251,7 @@ export function AppShell() {
         setFavoriteRecipeIds(nextState.favoriteRecipeIds);
         setGroceryList(nextState.groceryList);
 
-        if (storedVersion !== STORAGE_SCHEMA_VERSION) {
+        if (storedVersion !== STORAGE_SCHEMA_VERSION || hasLegacyStorage) {
           await AsyncStorage.multiSet([
             [STORAGE_VERSION_KEY, STORAGE_SCHEMA_VERSION],
             [ITEM_STORAGE_KEY, JSON.stringify(nextState.quickSelectItems)],
@@ -248,6 +260,7 @@ export function AppShell() {
             [FAVORITES_STORAGE_KEY, JSON.stringify(nextState.favoriteRecipeIds)],
             [GROCERY_STORAGE_KEY, JSON.stringify(nextState.groceryList)],
           ]);
+          await AsyncStorage.multiRemove(LEGACY_STORAGE_KEYS);
         }
       } catch {
         await AsyncStorage.multiRemove([
@@ -257,6 +270,7 @@ export function AppShell() {
           RECIPE_STORAGE_KEY,
           FAVORITES_STORAGE_KEY,
           GROCERY_STORAGE_KEY,
+          ...LEGACY_STORAGE_KEYS,
         ]);
 
         if (!active) {
@@ -328,7 +342,7 @@ export function AppShell() {
       return;
     }
 
-    const data: StockUpData = {
+    const data: StockAppData = {
       version: Number(STORAGE_SCHEMA_VERSION),
       updatedAt: new Date().toISOString(),
       itemTypes,

@@ -2,15 +2,15 @@
 
 Last updated: 2026-07-24
 
-StockUp stores your grocery lists, pantry items, favorites, and recipes locally on your device. Google sign-in is optional.
+StockApp stores your grocery lists, pantry items, favorites, and recipes locally on your device. Google sign-in is optional.
 
 ## Information We Collect
 
-StockUp does not require account registration. It operates primarily offline with local storage.
+StockApp does not require account registration. It operates primarily offline with local storage.
 
-If you choose to sign in with Google, StockUp may sync your data to your private Google Drive app data folder for backup and cross-device access.
+If you choose to sign in with Google, StockApp may sync your data to your private Google Drive app data folder for backup and cross-device access.
 
-If you choose to add an image to a recipe, StockUp requests access to your device photo library only for that action.
+If you choose to add an image to a recipe, StockApp requests access to your device photo library only for that action.
 
 ## How Information Is Used
 
@@ -20,7 +20,7 @@ If you choose to add an image to a recipe, StockUp requests access to your devic
 
 ## Data Sharing
 
-StockUp does not share your data with third parties except when you explicitly enable Google Drive sync with your own Google account.
+StockApp does not share your data with third parties except when you explicitly enable Google Drive sync with your own Google account.
 
 ## Data Retention
 
@@ -29,12 +29,12 @@ StockUp does not share your data with third parties except when you explicitly e
 
 ## Your Choices
 
-- You can use StockUp without creating an account.
+- You can use StockApp without creating an account.
 - Google sign-in is optional and can be disabled by signing out.
 - You can deny photo access and continue using the app without recipe images.
 
 ## Contact
 
-Support email: support@stockup.app
+Support email: support@stockapp.app
 
 Before store submission, publish this policy at a public HTTPS URL and update the app submission fields to use that hosted address.

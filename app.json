@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "StockUp",
-    "slug": "stockup",
+    "name": "StockApp",
+    "slug": "stockapp",
     "version": "1.0.0",
-    "scheme": "com.stockup.mobile",
+    "scheme": "com.stockapp.mobile",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
@@ -14,15 +14,15 @@
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.stockup.mobile",
+      "bundleIdentifier": "com.stockapp.mobile",
       "buildNumber": "1",
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow StockUp to access your photos so you can add recipe images.",
+        "NSPhotoLibraryUsageDescription": "Allow StockApp to access your photos so you can add recipe images.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
-      "package": "com.stockup.mobile",
+      "package": "com.stockapp.mobile",
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -39,10 +39,10 @@
       "googleWebClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "googleAndroidClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "googleIosClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
-      "supportEmail": "support@stockup.app",
-      "privacyPolicyUrl": "https://stockup.app/privacy",
-      "supportUrl": "https://stockup.app/support",
-      "marketingUrl": "https://stockup.app"
+      "supportEmail": "support@stockapp.app",
+      "privacyPolicyUrl": "https://stockapp.app/privacy",
+      "supportUrl": "https://stockapp.app/support",
+      "marketingUrl": "https://stockapp.app"
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -55,7 +55,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow StockUp to access your photos so you can add recipe images."
+          "photosPermission": "Allow StockApp to access your photos so you can add recipe images."
         }
       ],
       "expo-web-browser",

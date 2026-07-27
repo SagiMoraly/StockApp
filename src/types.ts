@@ -63,7 +63,7 @@ export type QuickSelectItem = {
   colors: string[];
 };
 
-export type StockUpData = {
+export type StockAppData = {
   version: number;
   updatedAt: string;
   itemTypes: string[];

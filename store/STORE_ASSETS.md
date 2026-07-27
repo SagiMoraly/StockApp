@@ -31,6 +31,6 @@
 
 ## Pre-Submission Checks
 
-1. Make sure icons match the final StockUp brand.
+1. Make sure icons match the final StockApp brand.
 2. Make sure screenshots do not contain placeholder text or development data.
 3. Verify splash and icon backgrounds are consistent across iOS and Android.

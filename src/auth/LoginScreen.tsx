@@ -12,7 +12,7 @@ export function LoginScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-        <Text style={[styles.logo, { color: colors.accent }]}>StockUp</Text>
+        <Text style={[styles.logo, { color: colors.accent }]}>StockApp</Text>
         <Text style={[styles.title, { color: colors.heading }]}>{t('auth.title')}</Text>
         <Text style={[styles.description, { color: colors.textMuted }]}>{t('auth.description')}</Text>
         <TouchableOpacity style={[styles.googleButton, { backgroundColor: colors.accent }]} onPress={signInWithGoogle}>
