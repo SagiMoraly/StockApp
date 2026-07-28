@@ -42,7 +42,10 @@
       "supportEmail": "support@stockapp.app",
       "privacyPolicyUrl": "https://stockapp.app/privacy",
       "supportUrl": "https://stockapp.app/support",
-      "marketingUrl": "https://stockapp.app"
+      "marketingUrl": "https://stockapp.app",
+      "eas": {
+        "projectId": "413a7392-8d42-45da-a55e-8975c2f3ad09"
+      }
     },
     "runtimeVersion": {
       "policy": "appVersion"
@@ -60,6 +63,7 @@
       ],
       "expo-web-browser",
       "expo-secure-store"
-    ]
+    ],
+    "owner": "ogoritoo"
   }
 }
