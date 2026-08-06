@@ -36,9 +36,9 @@
       "favicon": "./assets/favicon.png"
     },
     "extra": {
-      "googleWebClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
-      "googleAndroidClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
-      "googleIosClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
+      "googleWebClientId": "090366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
+      "googleAndroidClientId": "090366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
+      "googleIosClientId": "090366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "supportEmail": "support@stockapp.app",
       "privacyPolicyUrl": "https://stockapp.app/privacy",
       "supportUrl": "https://stockapp.app/support",
