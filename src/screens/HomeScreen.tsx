@@ -7,14 +7,15 @@ import { useI18n } from '../LocalizationProvider';
 import { RecipeCard } from '../components/RecipeCard';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
-import { GroceryList, Recipe } from '../types';
-import { getListCounts } from '../utils/grocery';
+import { GroceryList, QuickSelectItem, Recipe } from '../types';
+import { getListCounts, resolveItemName } from '../utils/grocery';
 
 type HomeScreenProps = {
   searchQuery: string;
   onSearchQueryChange: (value: string) => void;
   recipes: Recipe[];
   groceryList: GroceryList;
+  catalogItems: QuickSelectItem[];
   onRecipePress: (recipe: Recipe) => void;
   onBrowseRecipes: () => void;
   onOpenList: () => void;
@@ -27,6 +28,7 @@ export function HomeScreen({
   onSearchQueryChange,
   recipes,
   groceryList,
+  catalogItems,
   onRecipePress,
   onBrowseRecipes,
   onOpenList,
@@ -149,7 +151,7 @@ export function HomeScreen({
           {previewItems.length ? (
             previewItems.map((item) => (
               <View key={item.id} style={styles.itemChip}>
-                <Text style={styles.itemChipText}>{item.name}</Text>
+                <Text style={styles.itemChipText}>{resolveItemName(catalogItems, item.itemId, item.name)}</Text>
               </View>
             ))
           ) : (

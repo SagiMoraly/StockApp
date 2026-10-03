@@ -33,7 +33,7 @@ type DraftIngredient = {
   quantity: number;
   quantityDraft: string;
   sectionId?: string;
-  quickItemId?: string;
+  itemId?: string;
   unitLabel?: string;
 };
 
@@ -81,19 +81,19 @@ const normalizeNumberDraft = (value: string, fallback: string) => {
 
 const toDraftIngredient = (ingredient: RecipeIngredient, quickItems: QuickSelectItem[]): DraftIngredient => {
   const matchedQuickItem =
-    quickItems.find((item) => ingredient.quickItemId && item.id === ingredient.quickItemId) ??
+    quickItems.find((item) => ingredient.itemId && item.id === ingredient.itemId) ??
     quickItems.find((item) => item.name.toLowerCase() === ingredient.name.toLowerCase());
   const parsedAmount = parseAmount(ingredient.amount);
   const quantity = normalizeQuantity(parsedAmount.quantity);
 
   return {
     id: ingredient.id,
-    name: ingredient.name,
+    name: matchedQuickItem?.name ?? ingredient.name,
     quantity,
     quantityDraft: String(quantity),
-    sectionId: ingredient.sectionId ?? matchedQuickItem?.sectionId,
-    quickItemId: ingredient.quickItemId ?? matchedQuickItem?.id,
-    unitLabel: ingredient.unitLabel ?? matchedQuickItem?.unitLabel ?? parsedAmount.unitLabel,
+    sectionId: matchedQuickItem?.sectionId ?? ingredient.sectionId,
+    itemId: matchedQuickItem?.id ?? ingredient.itemId,
+    unitLabel: matchedQuickItem?.unitLabel ?? ingredient.unitLabel ?? parsedAmount.unitLabel,
   };
 };
 
@@ -104,8 +104,8 @@ type RecipeEditModalProps = {
   categories: readonly RecipeCategory[];
   quickSelectItems: QuickSelectItem[];
   onClose: () => void;
-  onSave: (recipeId: string, updates: RecipePayload) => void;
-  onCreate: (recipeDraft: RecipePayload) => void;
+  onSave: (recipeId: string, updates: RecipePayload) => void | Promise<void>;
+  onCreate: (recipeDraft: RecipePayload) => void | Promise<void>;
 };
 
 export function RecipeEditModal({
@@ -183,7 +183,7 @@ export function RecipeEditModal({
     setIngredients((currentIngredients) =>
       currentIngredients.some(
         (ingredient) =>
-          ingredient.quickItemId === item.id || ingredient.name.toLowerCase() === item.name.toLowerCase(),
+          ingredient.itemId === item.id || ingredient.name.toLowerCase() === item.name.toLowerCase(),
       )
         ? currentIngredients
         : [
@@ -194,7 +194,7 @@ export function RecipeEditModal({
               quantity: 1,
               quantityDraft: '1',
               sectionId: item.sectionId,
-              quickItemId: item.id,
+              itemId: item.id,
               unitLabel: item.unitLabel,
             },
           ],
@@ -277,17 +277,17 @@ export function RecipeEditModal({
     }
   };
 
-  const submit = () => {
+  const submit = async () => {
     const nextIngredients = ingredients
       .map((ingredient) => ({
         name: ingredient.name.trim(),
         amount: composeAmount(ingredient.quantity, ingredient.unitLabel),
         sectionId: ingredient.sectionId,
-        quickItemId: ingredient.quickItemId,
+        itemId: ingredient.itemId,
         unitLabel: ingredient.unitLabel,
         id: ingredient.id,
       }))
-      .filter((ingredient) => ingredient.name);
+      .filter((ingredient) => ingredient.itemId && ingredient.name);
 
     const fallbackTitle = mode === 'edit' && recipe ? recipe.title : t('recipeEdit.untitled');
     const payload: RecipePayload = {
@@ -303,7 +303,7 @@ export function RecipeEditModal({
     };
 
     if (mode === 'create') {
-      onCreate(payload);
+      await onCreate(payload);
       return;
     }
 
@@ -311,7 +311,11 @@ export function RecipeEditModal({
       return;
     }
 
-    onSave(recipe.id, payload);
+    try {
+      await onSave(recipe.id, payload);
+    } catch {
+      return;
+    }
     onClose();
   };
 

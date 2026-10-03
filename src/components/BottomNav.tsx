@@ -17,6 +17,7 @@ const tabs: Array<{ key: TabKey; labelKey: string; icon: keyof typeof Ionicons.g
   { key: 'recipes', labelKey: 'tabs.recipes', icon: 'book-outline' },
   { key: 'list', labelKey: 'tabs.list', icon: 'list-outline' },
   { key: 'items', labelKey: 'tabs.items', icon: 'basket-outline' },
+  { key: 'household', labelKey: 'tabs.household', icon: 'people-outline' },
 ];
 
 export function BottomNav({ activeTab, onTabPress }: BottomNavProps) {
@@ -27,13 +28,19 @@ export function BottomNav({ activeTab, onTabPress }: BottomNavProps) {
   return (
     <View style={styles.bottomBar}>
       {tabs.map((tab) => (
-        <TouchableOpacity key={tab.key} style={styles.tabItem} onPress={() => onTabPress(tab.key)}>
+        <TouchableOpacity
+          key={tab.key}
+          style={[styles.tabItem, tab.key === 'list' && styles.listTabItem]}
+          onPress={() => onTabPress(tab.key)}
+        >
           <Ionicons
             name={tab.icon}
             size={20}
-            color={activeTab === tab.key ? colors.accent : colors.mutedIcon}
+            color={tab.key === 'list' ? '#FFFFFF' : activeTab === tab.key ? colors.accent : colors.mutedIcon}
           />
-          <Text style={[styles.tabLabel, activeTab === tab.key && styles.activeTabLabel]}>{t(tab.labelKey)}</Text>
+          <Text style={[styles.tabLabel, tab.key === 'list' && styles.listTabLabel, activeTab === tab.key && styles.activeTabLabel]}>
+            {t(tab.labelKey)}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -68,6 +75,15 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
     justifyContent: 'center',
     gap: 4,
   },
+  listTabItem: {
+    alignSelf: 'center',
+    backgroundColor: colors.accent,
+    borderRadius: 32,
+    height: 64,
+    justifyContent: 'center',
+    marginTop: -22,
+    width: 64,
+  },
   tabLabel: {
     fontSize: 11,
     color: colors.mutedIcon,
@@ -75,5 +91,8 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isRTL: bool
   },
   activeTabLabel: {
     color: colors.accent,
+  },
+  listTabLabel: {
+    color: '#FFFFFF',
   },
 });

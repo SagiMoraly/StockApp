@@ -101,10 +101,22 @@ export const parseAmount = (amount: string): { quantity: number; unitLabel?: str
   };
 };
 
+export const resolveCatalogItem = (items: QuickSelectItem[], itemId?: string) =>
+  itemId ? items.find((item) => item.id === itemId) : undefined;
+
+export const resolveItemName = (items: QuickSelectItem[], itemId?: string, fallback = '') =>
+  resolveCatalogItem(items, itemId)?.name ?? fallback;
+
+const sameCatalogItem = (left: GroceryItem | RecipeIngredient, right: { itemId?: string; name: string }) => {
+  if (left.itemId && right.itemId) {
+    return left.itemId === right.itemId;
+  }
+
+  return left.name.toLowerCase() === right.name.toLowerCase();
+};
+
 const mergeOrAppendItem = (items: GroceryItem[], nextItem: GroceryItem) => {
-  const existingItem = items.find(
-    (item) => item.name.toLowerCase() === nextItem.name.toLowerCase(),
-  );
+  const existingItem = items.find((item) => sameCatalogItem(item, nextItem));
 
   if (!existingItem) {
     return [...items, nextItem];
@@ -116,7 +128,8 @@ const mergeOrAppendItem = (items: GroceryItem[], nextItem: GroceryItem) => {
           ...item,
           quantity: normalizeQuantity(item.quantity + nextItem.quantity),
           unitLabel: item.unitLabel ?? nextItem.unitLabel,
-          quickItemId: item.quickItemId ?? nextItem.quickItemId,
+          itemId: item.itemId ?? nextItem.itemId,
+          name: nextItem.name,
         }
       : item,
   );
@@ -154,13 +167,14 @@ export const addIngredientsToList = (
   });
 
   ingredients.forEach((ingredient) => {
-    const matchedQuickItem = quickItems.find(
-      (item) => item.name.toLowerCase() === ingredient.name.toLowerCase(),
-    );
-    const targetSection = ingredient.sectionId ?? matchedQuickItem?.sectionId ?? sectionByName(ingredient.name);
+    const matchedQuickItem =
+      resolveCatalogItem(quickItems, ingredient.itemId) ??
+      quickItems.find((item) => item.name.toLowerCase() === ingredient.name.toLowerCase());
+    const targetSection = matchedQuickItem?.sectionId ?? ingredient.sectionId ?? sectionByName(matchedQuickItem?.name ?? ingredient.name);
     const parsedAmount = parseAmount(ingredient.amount);
     const quantity = parsedAmount.quantity;
     const unitLabel = matchedQuickItem?.unitLabel ?? parsedAmount.unitLabel;
+    const itemName = matchedQuickItem?.name ?? ingredient.name;
 
     if (!sectionItems.has(targetSection)) {
       sectionItems.set(targetSection, []);
@@ -174,10 +188,10 @@ export const addIngredientsToList = (
     const items = sectionItems.get(targetSection) ?? [];
     const nextItem: GroceryItem = {
       id: `${targetSection}-${ingredient.id}`,
-      name: ingredient.name,
+      name: itemName,
       quantity,
       unitLabel,
-      quickItemId: matchedQuickItem?.id,
+      itemId: matchedQuickItem?.id ?? ingredient.itemId,
       checked: false,
     };
 
@@ -200,7 +214,7 @@ export const addCustomItemToList = (
     quantity: number;
     sectionId: GrocerySectionId;
     unitLabel?: string;
-    quickItemId?: string;
+    itemId?: string;
   },
 ) => {
   const name = item.name.trim();
@@ -236,7 +250,7 @@ export const addCustomItemToList = (
           name,
           quantity,
           unitLabel: item.unitLabel,
-          quickItemId: item.quickItemId,
+          itemId: item.itemId,
           checked: false,
         }),
       };
@@ -271,7 +285,7 @@ export const addQuickItemsToList = (
         quantity: normalizeQuantity(item.quantity),
         sectionId: item.quickItem.sectionId,
         unitLabel: item.quickItem.unitLabel,
-        quickItemId: item.quickItem.id,
+        itemId: item.quickItem.id,
       }),
     list,
   );

@@ -15,25 +15,30 @@ import { ConfirmActionModal } from './ConfirmActionModal';
 import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
-import { Recipe } from '../types';
+import { QuickSelectItem, Recipe } from '../types';
+import { resolveItemName } from '../utils/grocery';
 
 type RecipeDetailModalProps = {
   recipe: Recipe | null;
+  catalogItems: QuickSelectItem[];
   favorite: boolean;
   visible: boolean;
   onClose: () => void;
   onAddToList: (recipe: Recipe) => void;
+  onShare: (recipe: Recipe) => void;
   onToggleFavorite: (recipeId: string) => void;
   onEdit: () => void;
-  onDelete: (recipeId: string) => void;
+  onDelete: (recipeId: string) => void | Promise<void>;
 };
 
 export function RecipeDetailModal({
   recipe,
+  catalogItems,
   favorite,
   visible,
   onClose,
   onAddToList,
+  onShare,
   onToggleFavorite,
   onEdit,
   onDelete,
@@ -78,6 +83,9 @@ export function RecipeDetailModal({
                 <Text style={styles.meta}>{recipe.time}  •  {recipe.difficulty}</Text>
               </View>
               <View style={styles.headerActions}>
+                <TouchableOpacity style={styles.deleteCircleButton} onPress={() => onShare(recipe)}>
+                  <Ionicons name="share-outline" size={17} color={colors.text} />
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.deleteCircleButton} onPress={() => setShowDeleteConfirmation(true)}>
                   <Ionicons name="trash-outline" size={17} color={colors.danger} />
                 </TouchableOpacity>
@@ -96,7 +104,9 @@ export function RecipeDetailModal({
 
             {recipe.ingredients.map((ingredient) => (
               <View key={ingredient.id} style={styles.ingredientRow}>
-                <Text style={styles.ingredientText}>{ingredient.amount} {ingredient.name}</Text>
+                <Text style={styles.ingredientText}>
+                  {ingredient.amount} {resolveItemName(catalogItems, ingredient.itemId, ingredient.name)}
+                </Text>
               </View>
             ))}
           </ScrollView>
@@ -119,9 +129,13 @@ export function RecipeDetailModal({
         message={t('recipeDetail.deleteMessage', { name: recipe.title })}
         confirmLabel={t('common.delete')}
         onCancel={() => setShowDeleteConfirmation(false)}
-        onConfirm={() => {
-          onDelete(recipe.id);
-          close();
+        onConfirm={async () => {
+          try {
+            await onDelete(recipe.id);
+            close();
+          } catch {
+            return;
+          }
         }}
       />
     </Modal>

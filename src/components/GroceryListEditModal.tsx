@@ -16,6 +16,7 @@ import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
 import { GroceryList, GrocerySectionId, QuickSelectItem } from '../types';
+import { resolveItemName } from '../utils/grocery';
 
 type GroceryListEditModalProps = {
   visible: boolean;
@@ -130,7 +131,7 @@ export function GroceryListEditModal({
                   section.items.map((item) => (
                     <View key={item.id} style={styles.itemRow}>
                       <View style={styles.itemTextWrap}>
-                        <Text style={styles.itemName}>{item.name}</Text>
+                        <Text style={styles.itemName}>{resolveItemName(quickSelectItems, item.itemId, item.name)}</Text>
                         <Text style={styles.itemQuantity}>{item.quantity}</Text>
                       </View>
                       <TouchableOpacity style={styles.removeButton} onPress={() => onRemoveItem(item.id)}>

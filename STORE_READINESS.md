@@ -15,5 +15,5 @@ Before uploading to the stores, finish the remaining release work:
 2. Replace placeholder support and privacy URLs with hosted production URLs.
 3. Add the store screenshots and marketing graphics listed in `store/STORE_ASSETS.md`.
 4. Test on at least one physical Android device and one physical iPhone.
-5. Decide whether the app is local-only or needs account sync/backups.
-6. Add linting and at least one smoke test path for recipes, items, and grocery list flows.
+5. Clearly disclose that offline changes are local-only and are not automatically merged after reconnecting.
+6. Run the mobile CI typecheck/Jest job and complete device-level sign-in, API, and configured image checks.

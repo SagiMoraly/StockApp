@@ -19,21 +19,21 @@ Use StockApp to:
 - Build and manage your own grocery list
 - Create recipes and turn ingredients into shopping items
 - Organize staple items by food type
-- Keep everything stored locally on your device
-- Optionally sync your data to Google Drive when signed in
+- Keep your planning cached on your device and access shared account data when signed in
+- Optionally sign in to access account and household data
 
-StockApp works offline without an account. Google sign-in is optional and enables syncing to Google Drive. Photo access is only requested if you choose to add an image to a recipe.
+StockApp works offline without an account. Google sign-in is optional and connects to StockApp account services. Photo access is only requested if you choose to add an image to a recipe.
 
 ## Review Notes
 
 - The app works without login or sign-up.
-- All grocery lists, items, and recipes are stored locally on the device.
-- Google sign-in is optional and enables sync to the user's private Google Drive app data folder.
-- Users can disable sync by signing out and using offline mode.
+- Offline changes stay on the device; signed-in supported changes are sent to the StockApp API.
+- Google sign-in authenticates with the StockApp API; Google Drive is not used.
+- Recipe image uploads require the StockApp API and configured Azure Blob Storage.
 - Photo library access is optional and only used when the user chooses a recipe image.
 
 ## URLs To Replace Before Submission
 
-- Support URL: https://stockapp.app/support
-- Privacy Policy URL: https://stockapp.app/privacy
-- Marketing URL: https://stockapp.app
+- Support URL: verify and host before submission
+- Privacy Policy URL: verify and host before submission
+- Marketing URL: verify ownership and hosting before submission

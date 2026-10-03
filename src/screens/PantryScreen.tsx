@@ -6,17 +6,19 @@ import { ConfirmActionModal } from '../components/ConfirmActionModal';
 import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
-import { GrocerySectionId, QuickSelectItem } from '../types';
+import { GroceryList, GrocerySectionId, QuickSelectItem, Recipe } from '../types';
 
 type PantryScreenProps = {
   items: QuickSelectItem[];
   itemTypes: GrocerySectionId[];
-  onAddItem: (item: Omit<QuickSelectItem, 'id'>) => boolean;
-  onAddType: (label: string) => GrocerySectionId | null;
-  onRenameType: (typeId: GrocerySectionId, label: string) => GrocerySectionId | null;
-  onDeleteType: (typeId: GrocerySectionId) => boolean;
-  onUpdateItem: (itemId: string, updates: Pick<QuickSelectItem, 'name' | 'sectionId' | 'unitLabel' | 'colors'>) => boolean;
-  onDeleteItem: (itemId: string) => boolean;
+  recipes: Recipe[];
+  groceryList: GroceryList;
+  onAddItem: (item: Omit<QuickSelectItem, 'id'>) => boolean | Promise<boolean>;
+  onAddType: (label: string) => GrocerySectionId | null | Promise<GrocerySectionId | null>;
+  onRenameType: (typeId: GrocerySectionId, label: string) => GrocerySectionId | null | Promise<GrocerySectionId | null>;
+  onDeleteType: (typeId: GrocerySectionId) => boolean | Promise<boolean>;
+  onUpdateItem: (itemId: string, updates: Pick<QuickSelectItem, 'name' | 'sectionId' | 'unitLabel' | 'colors'>) => boolean | Promise<boolean>;
+  onDeleteItem: (itemId: string) => boolean | Promise<boolean>;
 };
 
 type PendingItemDelete = { id: string; name: string } | null;
@@ -31,9 +33,16 @@ const formatTypeLabel = (value: string) =>
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ');
 
+const usesCatalogItem = (itemId: string, name: string, candidateId?: string, candidateName?: string) =>
+  candidateId === itemId || (!candidateId && (candidateName ?? '').toLowerCase() === name.toLowerCase());
+
+const formatUsageList = (names: string[]) => names.join(', ');
+
 export function PantryScreen({
   items,
   itemTypes,
+  recipes,
+  groceryList,
   onAddItem,
   onAddType,
   onRenameType,
@@ -60,6 +69,48 @@ export function PantryScreen({
 
   const [pendingItemDelete, setPendingItemDelete] = useState<PendingItemDelete>(null);
   const [pendingTypeDelete, setPendingTypeDelete] = useState<PendingTypeDelete>(null);
+
+  const itemUsage = useMemo(() => {
+    if (!pendingItemDelete) {
+      return { recipes: [] as string[], lists: [] as string[] };
+    }
+
+    const usedRecipes = recipes
+      .filter((recipe) =>
+        recipe.ingredients.some((ingredient) =>
+          usesCatalogItem(pendingItemDelete.id, pendingItemDelete.name, ingredient.itemId, ingredient.name),
+        ),
+      )
+      .map((recipe) => recipe.title);
+    const usedInGroceryList = groceryList.sections.some((section) =>
+      section.items.some((item) => usesCatalogItem(pendingItemDelete.id, pendingItemDelete.name, item.itemId, item.name)),
+    );
+
+    return {
+      recipes: usedRecipes,
+      lists: usedInGroceryList ? [groceryList.name] : [],
+    };
+  }, [groceryList, pendingItemDelete, recipes]);
+
+  const deleteItemMessage = useMemo(() => {
+    if (!pendingItemDelete) {
+      return '';
+    }
+
+    const places = [
+      ...itemUsage.recipes.map((name) => t('pantry.deleteItemRecipePlace', { name })),
+      ...itemUsage.lists.map((name) => t('pantry.deleteItemListPlace', { name })),
+    ];
+
+    if (!places.length) {
+      return t('pantry.deleteItemMessage', { name: pendingItemDelete.name });
+    }
+
+    return t('pantry.deleteItemUsedMessage', {
+      name: pendingItemDelete.name,
+      places: formatUsageList(places),
+    });
+  }, [itemUsage, pendingItemDelete, t]);
 
   useEffect(() => {
     if (!itemTypes.length) {
@@ -142,7 +193,7 @@ export function PantryScreen({
     setStatusMessage(t('pantry.status.editingItem', { name: item.name }));
   };
 
-  const submitItem = () => {
+  const submitItem = async () => {
     const trimmedName = name.trim();
 
     if (!trimmedName) {
@@ -156,7 +207,7 @@ export function PantryScreen({
     }
 
     if (editingItemId) {
-      const updated = onUpdateItem(editingItemId, {
+      const updated = await onUpdateItem(editingItemId, {
         name: trimmedName,
         sectionId: selectedTypeId,
         unitLabel: unitLabel.trim() || undefined,
@@ -173,7 +224,7 @@ export function PantryScreen({
       return;
     }
 
-    const added = onAddItem({
+    const added = await onAddItem({
       name: trimmedName,
       sectionId: selectedTypeId,
       unitLabel: unitLabel.trim() || undefined,
@@ -209,9 +260,9 @@ export function PantryScreen({
     setShowTypeEditor(false);
   };
 
-  const submitType = () => {
+  const submitType = async () => {
     if (editingTypeId) {
-      const nextTypeId = onRenameType(editingTypeId, typeDraft);
+      const nextTypeId = await onRenameType(editingTypeId, typeDraft);
 
       if (!nextTypeId) {
         setStatusMessage(t('pantry.status.renameTypeFailed'));
@@ -231,7 +282,7 @@ export function PantryScreen({
       return;
     }
 
-    const nextTypeId = onAddType(typeDraft);
+    const nextTypeId = await onAddType(typeDraft);
 
     if (!nextTypeId) {
       setStatusMessage(t('pantry.status.addTypeFailed'));
@@ -244,12 +295,12 @@ export function PantryScreen({
     cancelTypeEdit();
   };
 
-  const confirmDeleteItem = () => {
+  const confirmDeleteItem = async () => {
     if (!pendingItemDelete) {
       return;
     }
 
-    const deleted = onDeleteItem(pendingItemDelete.id);
+    const deleted = await onDeleteItem(pendingItemDelete.id);
 
     if (deleted) {
       if (editingItemId === pendingItemDelete.id) {
@@ -264,12 +315,12 @@ export function PantryScreen({
     setPendingItemDelete(null);
   };
 
-  const confirmDeleteType = () => {
+  const confirmDeleteType = async () => {
     if (!pendingTypeDelete) {
       return;
     }
 
-    const deleted = onDeleteType(pendingTypeDelete.id);
+    const deleted = await onDeleteType(pendingTypeDelete.id);
 
     if (!deleted) {
       setStatusMessage(t('pantry.status.keepOneType'));
@@ -527,11 +578,7 @@ export function PantryScreen({
       <ConfirmActionModal
         visible={pendingItemDelete !== null}
         title={t('pantry.deleteItemTitle')}
-        message={
-          pendingItemDelete
-            ? t('pantry.deleteItemMessage', { name: pendingItemDelete.name })
-            : ''
-        }
+        message={deleteItemMessage}
         confirmLabel={t('common.delete')}
         onCancel={() => setPendingItemDelete(null)}
         onConfirm={confirmDeleteItem}

@@ -15,6 +15,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.stockapp.mobile",
+      "associatedDomains": [
+        "applinks:stockapp.app"
+      ],
       "buildNumber": "1",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow StockApp to access your photos so you can add recipe images.",
@@ -23,6 +26,17 @@
     },
     "android": {
       "package": "com.stockapp.mobile",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            { "scheme": "https", "host": "stockapp.app", "pathPrefix": "/shares/accept" },
+            { "scheme": "https", "host": "stockapp.app", "pathPrefix": "/households/join" }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ],
       "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -40,6 +54,7 @@
       "googleAndroidClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "googleIosClientId": "890366013814-vkijtj7b4i0sjra8ujb19h77kv0u6klb.apps.googleusercontent.com",
       "supportEmail": "support@stockapp.app",
+      "shareLinkBaseUrl": "https://stockapp.app",
       "privacyPolicyUrl": "https://stockapp.app/privacy",
       "supportUrl": "https://stockapp.app/support",
       "marketingUrl": "https://stockapp.app",

@@ -21,15 +21,15 @@ With StockApp you can:
 - Create and edit your own recipes
 - Add recipe ingredients directly to a grocery list
 - Track what you still need to buy
-- Keep your data stored locally on your device
-- Optionally sign in with Google to sync your data to Google Drive
+- Access your planning locally and share account data when signed in
+- Optionally sign in to access StockApp account and household data
 
-StockApp works offline and does not require an account. Google sign-in is optional. Photo access is optional and only used if you choose to attach an image to a recipe.
+StockApp works offline and does not require an account. Google sign-in is optional and authenticates with the StockApp API. Photo access is optional and only used if you choose to attach an image to a recipe.
 
 ## Data Safety Notes
 
-- Personal data collected: None for offline use; Google account access is optional for sync
-- Data shared with third parties: Optional sync to the user's private Google Drive app data folder
+- Personal data collected: Google account profile is used for optional API sign-in
+- Data shared with third parties: Google processes sign-in; account data is stored by the StockApp API
 - Required permissions: Optional photo library/media access for recipe images only
 - Account creation: Not required
 - Google sign-in: Optional and can be disabled by signing out

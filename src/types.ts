@@ -1,4 +1,4 @@
-export type TabKey = 'home' | 'recipes' | 'list' | 'items';
+export type TabKey = 'home' | 'recipes' | 'list' | 'items' | 'household';
 
 export type RecipeCategory = 'All' | 'Breakfast' | 'Lunch' | 'Dinner' | 'Dessert';
 
@@ -9,12 +9,14 @@ export type RecipeIngredient = {
   name: string;
   amount: string;
   sectionId?: GrocerySectionId;
-  quickItemId?: string;
+  itemId?: string;
   unitLabel?: string;
 };
 
 export type Recipe = {
   id: string;
+  version?: number;
+  assetId?: string;
   title: string;
   subtitle: string;
   description: string;
@@ -31,7 +33,7 @@ export type GroceryItem = {
   name: string;
   quantity: number;
   unitLabel?: string;
-  quickItemId?: string;
+  itemId?: string;
   checked: boolean;
 };
 
@@ -50,6 +52,7 @@ export type GrocerySection = {
 
 export type GroceryList = {
   id: string;
+  version?: number;
   name: string;
   store: string;
   sections: GrocerySection[];
@@ -57,6 +60,8 @@ export type GroceryList = {
 
 export type QuickSelectItem = {
   id: string;
+  version?: number;
+  categoryId?: string;
   name: string;
   sectionId: GrocerySectionId;
   unitLabel?: string;

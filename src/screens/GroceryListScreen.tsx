@@ -8,19 +8,22 @@ import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
 import { GroceryItem, GroceryList, QuickAddSelection, QuickSelectItem } from '../types';
-import { getListCounts } from '../utils/grocery';
-
-const findQuickItemByName = (items: QuickSelectItem[], name: string) =>
-  items.find((item) => item.name.toLowerCase() === name.toLowerCase());
+import { getListCounts, resolveCatalogItem, resolveItemName } from '../utils/grocery';
 
 type GroceryListScreenProps = {
   groceryList: GroceryList;
+  groceryLists: GroceryList[];
+  selectedListId: string;
   quickSelectItems: QuickSelectItem[];
+  onSelectList: (listID: string) => void;
+  onCreateList: (name: string) => void | boolean | Promise<void | boolean>;
+  onDeleteList: () => boolean | Promise<boolean>;
   onToggleItem: (itemId: string) => void;
   onAddQuickItems: (selections: QuickAddSelection[]) => void;
   onSetItemQuantity: (itemId: string, quantity: number) => void;
   onAdjustItemQuantity: (itemId: string, delta: number) => void;
   onClearList: () => void;
+  onShareList: () => void;
   onDeleteItem: (itemId: string) => void;
 };
 
@@ -28,12 +31,18 @@ type ListFilter = 'all' | 'remaining' | 'bought';
 
 export function GroceryListScreen({
   groceryList,
+  groceryLists,
+  selectedListId,
   quickSelectItems,
+  onSelectList,
+  onCreateList,
+  onDeleteList,
   onToggleItem,
   onAddQuickItems,
   onSetItemQuantity,
   onAdjustItemQuantity,
   onClearList,
+  onShareList,
   onDeleteItem,
 }: GroceryListScreenProps) {
   const { colors, themeName } = useTheme();
@@ -47,6 +56,9 @@ export function GroceryListScreen({
   const [showAddItemsModal, setShowAddItemsModal] = useState(false);
   const [showClearModal, setShowClearModal] = useState(false);
   const [pendingItemDelete, setPendingItemDelete] = useState<GroceryItem | null>(null);
+  const [newListName, setNewListName] = useState('');
+  const [showCreateList, setShowCreateList] = useState(false);
+  const [showDeleteListConfirmation, setShowDeleteListConfirmation] = useState(false);
 
   useEffect(() => {
     setCollapsedSections((currentState) => {
@@ -61,6 +73,20 @@ export function GroceryListScreen({
       return nextState;
     });
   }, [groceryList.sections]);
+
+  const submitNewList = async () => {
+    if (!newListName.trim()) {
+      return;
+    }
+
+    const created = await onCreateList(newListName);
+    if (created === false) {
+      return;
+    }
+
+    setNewListName('');
+    setShowCreateList(false);
+  };
 
   const visibleSections = groceryList.sections
     .map((section) => ({
@@ -102,6 +128,9 @@ export function GroceryListScreen({
         <View style={styles.topRow}>
           <Text style={styles.title}>{t('list.title')}</Text>
           <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.topAction} onPress={onShareList}>
+              <Ionicons name="share-outline" size={15} color={colors.text} />
+            </TouchableOpacity>
             <TouchableOpacity style={styles.topAction} onPress={() => setShowClearModal(true)}>
               <Text style={styles.topActionText}>{t('common.clear')}</Text>
             </TouchableOpacity>
@@ -118,9 +147,64 @@ export function GroceryListScreen({
           </View>
         </View>
 
+        <View style={styles.listSelectorRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.listSelectorContent}>
+            {groceryLists.map((list) => (
+              <TouchableOpacity
+                key={list.id}
+                style={[styles.listSelectorChip, list.id === selectedListId && styles.listSelectorChipActive]}
+                onPress={() => onSelectList(list.id)}
+              >
+                <Text
+                  numberOfLines={1}
+                  style={[styles.listSelectorText, list.id === selectedListId && styles.listSelectorTextActive]}
+                >
+                  {list.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <TouchableOpacity style={styles.topAction} onPress={() => setShowCreateList(true)} accessibilityLabel={t('list.createList')}>
+            <Ionicons name="add" size={17} color={colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.topAction, groceryLists.length <= 1 && styles.disabledAction]}
+            onPress={() => setShowDeleteListConfirmation(true)}
+            disabled={groceryLists.length <= 1}
+            accessibilityLabel={t('list.deleteList')}
+          >
+            <Ionicons name="trash-outline" size={15} color={colors.danger} />
+          </TouchableOpacity>
+        </View>
+
+        {showCreateList ? (
+          <View style={styles.newListRow}>
+            <TextInput
+              value={newListName}
+              onChangeText={setNewListName}
+              placeholder={t('list.newListPlaceholder')}
+              placeholderTextColor={colors.inputPlaceholder}
+              style={styles.newListInput}
+              autoFocus
+              onSubmitEditing={() => {
+                void submitNewList();
+              }}
+            />
+            <TouchableOpacity
+              style={[styles.topAction, styles.topActionPrimary]}
+              onPress={() => void submitNewList()}
+            >
+              <Text style={styles.topActionPrimaryText}>{t('common.add')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.topAction} onPress={() => setShowCreateList(false)}>
+              <Ionicons name="close" size={16} color={colors.text} />
+            </TouchableOpacity>
+          </View>
+        ) : null}
+
         <View style={styles.storePill}>
           <Ionicons name="cart-outline" size={14} color={colors.text} />
-          <Text style={styles.storeLabel}>{groceryList.store}</Text>
+          <Text style={styles.storeLabel}>{groceryList.store || groceryList.name}</Text>
         </View>
 
         <View style={styles.segmentRow}>
@@ -165,7 +249,7 @@ export function GroceryListScreen({
 
                 {!collapsed
                   ? section.items.map((item) => {
-                      const matchedQuickItem = findQuickItemByName(quickSelectItems, item.name);
+                      const matchedQuickItem = resolveCatalogItem(quickSelectItems, item.itemId);
 
                       const quantityDraft = itemQuantityDrafts[item.id] ?? String(item.quantity);
 
@@ -181,7 +265,7 @@ export function GroceryListScreen({
                                     ))}
                                   </View>
                                 ) : null}
-                                <Text style={styles.itemName}>{item.name}</Text>
+                                <Text style={styles.itemName}>{resolveItemName(quickSelectItems, item.itemId, item.name)}</Text>
                               </View>
                               <Text style={styles.itemMeta}>{formatItemMeta(item, section.title)}</Text>
                             </View>
@@ -226,7 +310,9 @@ export function GroceryListScreen({
                                   ))}
                                 </View>
                               ) : null}
-                              <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>{item.name}</Text>
+                              <Text style={[styles.itemName, item.checked && styles.itemNameChecked]}>
+                                {resolveItemName(quickSelectItems, item.itemId, item.name)}
+                              </Text>
                             </View>
                             <Text style={styles.itemMeta}>{formatItemMeta(item, section.title)}</Text>
                           </View>
@@ -282,6 +368,19 @@ export function GroceryListScreen({
           setPendingItemDelete(null);
         }}
       />
+
+      <ConfirmActionModal
+        visible={showDeleteListConfirmation}
+        title={t('list.deleteListTitle')}
+        message={t('list.deleteListMessage', { name: groceryList.name })}
+        confirmLabel={t('common.delete')}
+        onCancel={() => setShowDeleteListConfirmation(false)}
+        onConfirm={async () => {
+          if (await onDeleteList()) {
+            setShowDeleteListConfirmation(false);
+          }
+        }}
+      />
     </>
   );
 }
@@ -301,6 +400,58 @@ const createStyles = (colors: ReturnType<typeof useTheme>['colors'], isDark: boo
   actionRow: {
     flexDirection: isRTL ? 'row-reverse' : 'row',
     gap: 8,
+  },
+  listSelectorRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  listSelectorContent: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  listSelectorChip: {
+    maxWidth: 160,
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
+  },
+  listSelectorChipActive: {
+    borderColor: colors.accent,
+    backgroundColor: colors.accent,
+  },
+  listSelectorText: {
+    color: colors.text,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  listSelectorTextActive: {
+    color: colors.white,
+  },
+  disabledAction: {
+    opacity: 0.45,
+  },
+  newListRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  newListInput: {
+    flex: 1,
+    minWidth: 0,
+    height: 40,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+    color: colors.text,
   },
   title: {
     color: colors.title,

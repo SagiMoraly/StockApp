@@ -13,10 +13,12 @@ import {
 import { useI18n } from '../LocalizationProvider';
 import { useTheme } from '../ThemeProvider';
 import { radius } from '../theme';
-import { GroceryList, Recipe } from '../types';
+import { GroceryList, QuickSelectItem, Recipe } from '../types';
+import { resolveItemName } from '../utils/grocery';
 
 type AddToListModalProps = {
   recipe: Recipe | null;
+  catalogItems: QuickSelectItem[];
   groceryList: GroceryList;
   selectedIngredientIds: string[];
   visible: boolean;
@@ -27,6 +29,7 @@ type AddToListModalProps = {
 
 export function AddToListModal({
   recipe,
+  catalogItems,
   groceryList,
   selectedIngredientIds,
   visible,
@@ -73,7 +76,9 @@ export function AddToListModal({
                   <View style={[styles.checkbox, selected && styles.checkboxChecked]}>
                     {selected ? <Ionicons name="checkmark" size={14} color={colors.white} /> : null}
                   </View>
-                  <Text style={styles.rowText}>{ingredient.name} ({ingredient.amount})</Text>
+                  <Text style={styles.rowText}>
+                    {resolveItemName(catalogItems, ingredient.itemId, ingredient.name)} ({ingredient.amount})
+                  </Text>
                 </TouchableOpacity>
               );
             })}
